@@ -504,6 +504,10 @@ class TestUpdateExperimentMutationSingleFeature(
             headers={settings.OPENIDC_EMAIL_HEADER: user_email},
         )
         self.assertEqual(response.status_code, 200)
+        content = json.loads(response.content)
+        result = content["data"]["updateExperiment"]
+
+        self.assertEqual(result["message"].keys(), {"experiment"})
 
         content = json.loads(response.content)
         result = content["data"]["updateExperiment"]
