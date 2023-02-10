@@ -23,6 +23,7 @@ from experimenter.experiments.models import (
     NimbusBranch,
     NimbusBranchFeatureValue,
     NimbusBranchScreenshot,
+    NimbusBucketRange,
     NimbusDocumentationLink,
     NimbusExperiment,
     NimbusFeatureConfig,
@@ -1107,7 +1108,17 @@ class NimbusExperimentSerializer(
 
             if experiment.has_filter(experiment.Filters.SHOULD_ALLOCATE_BUCKETS):
                 experiment.allocate_bucket_range()
-
+            
+            # if NimbusExperiment.objects.filter(
+            #     channel=self.channel, 
+            #     application=self.application, 
+            #     targeting_config_slug=self.targeting_config_slug,
+            #     is_rollout=self.is_rollout,
+            # ).count() > 1:
+            #     experiment.warnings["bucketing"] = [
+            #         NimbusConstants.ERROR_BUCKET_EXISTS
+            #     ]
+            
             if self.should_call_preview_task:
                 nimbus_synchronize_preview_experiments_in_kinto.apply_async(countdown=5)
 
@@ -1506,6 +1517,30 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
 
         return data
 
+    def _validate_bucket_namespaces(self, data):
+        if not self.instance or not self.instance.is_rollout:
+            return data
+        count = NimbusExperiment.objects.filter(
+                channel=self.channel, 
+                application=self.application, 
+                targeting_config_slug=self.targeting_config_slug,
+                is_rollout=self.is_rollout,
+            ).count()
+        if (
+            self.is_rollout
+            # and count > 0
+        ):
+            # self.warnings["is_rollout"] = [
+            #     NimbusConstants.ERROR_BUCKET_EXISTS
+            # ]
+            raise serializers.ValidationError(
+                {
+                    "is_rollout": f"Elise count is {count}"
+                }
+            )
+
+        return data
+
     def validate(self, data):
         application = data.get("application")
         channel = data.get("channel")
@@ -1519,9 +1554,20 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
         data = self._validate_versions(data)
         data = self._validate_sticky_enrollment(data)
         data = self._validate_rollout_version_support(data)
+        data = self._validate_bucket_namespaces(data)
         if application != NimbusExperiment.Application.DESKTOP:
             data = self._validate_languages_versions(data)
             data = self._validate_countries_versions(data)
+
+        # if NimbusExperiment.objects.filter(
+        #     channel=self.channel, 
+        #     application=self.application, 
+        #     targeting_config_slug=self.targeting_config_slug,
+        #     is_rollout=self.is_rollout,
+        # ).count() > 1:
+        #     experiment.warnings["bucketing"] = [
+        #         NimbusConstants.ERROR_BUCKET_EXISTS
+        #     ]
         return data
 
 

@@ -24,6 +24,9 @@ import { createMutationMock } from "src/components/Summary/mocks";
 import { CHANGELOG_MESSAGES, SERVER_ERRORS } from "src/lib/constants";
 import { mockExperimentQuery, mockLiveRolloutQuery } from "src/lib/mocks";
 import {
+  NimbusExperimentApplicationEnum,
+  NimbusExperimentChannelEnum,
+  NimbusExperimentFirefoxVersionEnum,
   NimbusExperimentPublishStatusEnum,
   NimbusExperimentStatusEnum,
 } from "src/types/globalTypes";
@@ -171,6 +174,29 @@ describe("PageSummary", () => {
     render(<Subject mocks={[mock]} />);
     await screen.findByText(/all required fields must be completed/);
     expect(screen.queryByTestId("launch-draft-to-preview")).toBeNull();
+  });
+
+  it("displays a warning for rollouts that will be in the same bucket", async () => {
+    const BUCKET_WARNING = 
+      "A rollout already exists for this combination of rollout, ...";
+    const { mock } = mockExperimentQuery("demo-slug", {
+      readyForReview: {
+        ready: false,
+        message: {
+          channel: [SERVER_ERRORS.EMPTY_LIST],
+        },
+        warnings: {
+          branches: [BUCKET_WARNING]
+        },
+      },
+      isRollout: true,
+      application: NimbusExperimentApplicationEnum.DESKTOP,
+      firefoxMinVersion: NimbusExperimentFirefoxVersionEnum.FIREFOX_106,
+      channel: NimbusExperimentChannelEnum.NIGHTLY,
+      targetingConfigSlug: "OH_NO"
+    });
+    render(<Subject mocks={[mock]} />);
+    expect(screen.queryByText("A rollout already exists")).toBeInTheDocument;
   });
 
   it("indicates status in review", async () => {
