@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+import classNames from "classnames";
 import { RouteComponentProps } from "@reach/router";
 import React, { useContext, useMemo, useState } from "react";
 import { Badge } from "react-bootstrap";
@@ -312,12 +313,31 @@ const StatusPills = ({
         label="Enrollment Complete"
       />
     )}
+    {experiment.publishStatus == NimbusExperimentPublishStatusEnum.DIRTY && (
+      <StatusPill
+        testId="pill-dirty-unpublished"
+        label="Unpublished changes"
+        color={"danger"}
+      />
+    )}
   </>
 );
 
-const StatusPill = ({ label, testId }: { label: string; testId: string }) => (
+const StatusPill = ({
+    label,
+    testId,
+    color = "primary",
+  }: { 
+    label: string;
+    testId: string;
+    color?: string;
+  }) => (
   <Badge
-    className="ml-2 border rounded-pill px-2 bg-white border-primary text-primary font-weight-normal"
+    className={
+      classNames(
+        `ml-2 border rounded-pill px-2 bg-white font-weight-normal border-${color} text-${color}`
+      )
+    }
     data-testid={testId}
   >
     {label}
