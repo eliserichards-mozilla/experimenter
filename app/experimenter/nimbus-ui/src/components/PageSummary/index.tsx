@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import classNames from "classnames";
 import { RouteComponentProps } from "@reach/router";
+import classNames from "classnames";
 import React, { useContext, useMemo, useState } from "react";
 import { Badge } from "react-bootstrap";
 import Alert from "react-bootstrap/Alert";
@@ -24,7 +24,7 @@ import {
   LIFECYCLE_REVIEW_FLOWS,
 } from "src/lib/constants";
 import { ExperimentContext } from "src/lib/contexts";
-import { getStatus, getSummaryAction } from "src/lib/experiment";
+import { getStatus, getSummaryAction, StatusCheck } from "src/lib/experiment";
 import { getExperiment_experimentBySlug } from "src/types/getExperiment";
 import {
   NimbusExperimentPublishStatusEnum,
@@ -210,7 +210,7 @@ const PageSummary = (props: RouteComponentProps) => {
       <Head title={`${experiment.name} – ${summaryTitle}`} />
       <h5 className="mb-3">
         Timeline
-        {status.live && <StatusPills {...{ experiment }} />}
+        {status.live && <StatusPills {...{ experiment, status }} />}
       </h5>
 
       <SummaryTimeline {...{ experiment }} />
@@ -297,8 +297,10 @@ export default PageSummary;
 
 const StatusPills = ({
   experiment,
+  status,
 }: {
   experiment: getExperiment_experimentBySlug;
+  status: StatusCheck;
 }) => (
   <>
     {experiment.isEnrollmentPaused === false && (
@@ -313,7 +315,9 @@ const StatusPills = ({
         label="Enrollment Complete"
       />
     )}
-    {experiment.publishStatus == NimbusExperimentPublishStatusEnum.DIRTY && (
+    {(status.dirty ||
+      status.updateRequested ||
+      status.updateRequestedWaiting) && (
       <StatusPill
         testId="pill-dirty-unpublished"
         label="Unpublished changes"
@@ -324,20 +328,18 @@ const StatusPills = ({
 );
 
 const StatusPill = ({
-    label,
-    testId,
-    color = "primary",
-  }: { 
-    label: string;
-    testId: string;
-    color?: string;
-  }) => (
+  label,
+  testId,
+  color = "primary",
+}: {
+  label: string;
+  testId: string;
+  color?: string;
+}) => (
   <Badge
-    className={
-      classNames(
-        `ml-2 border rounded-pill px-2 bg-white font-weight-normal border-${color} text-${color}`
-      )
-    }
+    className={classNames(
+      `ml-2 border rounded-pill px-2 bg-white font-weight-normal border-${color} text-${color}`,
+    )}
     data-testid={testId}
   >
     {label}
