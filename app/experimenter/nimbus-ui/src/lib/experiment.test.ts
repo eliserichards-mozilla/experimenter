@@ -18,6 +18,7 @@ import {
   resultsReadySortSelector,
   selectFromExperiment,
   startDateSortSelector,
+  unpublishedUpdatesSortSelector,
 } from "src/lib/experiment";
 import {
   mockDirectoryExperiments,
@@ -113,6 +114,7 @@ describe("selectFromExperiment", () => {
       [firefoxMinVersionSortSelector, "FIREFOX_83"],
       [firefoxMaxVersionSortSelector, "FIREFOX_64"],
       [populationPercentSortSelector, "100"],
+      [unpublishedUpdatesSortSelector, "0"],
     ] as const;
     selectorCases.forEach(([selectBy, expected]) =>
       expect(selectFromExperiment(experiment, selectBy)).toEqual(expected),
@@ -124,6 +126,12 @@ describe("selectFromExperiment", () => {
         enrollmentSortSelector,
       ),
     ).toEqual("8");
+    expect(
+      selectFromExperiment(
+        { ...experiment, proposedEnrollment: 40 },
+        enrollmentSortSelector,
+      ),
+    ).toEqual("2021-08-08T00:00:00.000Z");
     expect(
       selectFromExperiment(
         { ...experiment, resultsReady: true },
