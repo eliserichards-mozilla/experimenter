@@ -56,7 +56,6 @@ const PageSummary = (props: RouteComponentProps) => {
       onPauseReviewRejectedClicked,
       onUpdateClicked,
       onUpdateReviewApprovedClicked,
-      onUpdateReviewRejectedClicked,
     ],
   } = useChangeOperationMutation(
     experiment,
@@ -122,11 +121,6 @@ const PageSummary = (props: RouteComponentProps) => {
       publishStatus: NimbusExperimentPublishStatusEnum.APPROVED,
       changelogMessage: CHANGELOG_MESSAGES.REVIEW_APPROVED_UPDATE,
     },
-    {
-      status: NimbusExperimentStatusEnum.LIVE,
-      statusNext: null,
-      publishStatus: NimbusExperimentPublishStatusEnum.DIRTY,
-    },
   );
 
   const {
@@ -166,7 +160,7 @@ const PageSummary = (props: RouteComponentProps) => {
       };
     } else if (status.updateRequested) {
       return {
-        rejectChange: onUpdateReviewRejectedClicked,
+        rejectChange: () => {},
         approveChange: onUpdateReviewApprovedClicked,
         ...LIFECYCLE_REVIEW_FLOWS.UPDATE,
       };
@@ -186,7 +180,6 @@ const PageSummary = (props: RouteComponentProps) => {
     onPauseReviewApprovedClicked,
     onPauseReviewRejectedClicked,
     onUpdateReviewApprovedClicked,
-    onUpdateReviewRejectedClicked,
   ]);
 
   let launchDocs;
@@ -282,7 +275,6 @@ const PageSummary = (props: RouteComponentProps) => {
             {...{
               isLoading,
               onSubmit: onUpdateClicked,
-              onCancel: onUpdateReviewRejectedClicked,
             }}
           />
         )}
