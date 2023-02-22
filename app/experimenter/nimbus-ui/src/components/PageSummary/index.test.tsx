@@ -226,14 +226,22 @@ describe("PageSummary", () => {
     const { mockRollout, rollout } = mockLiveRolloutQuery("demo-slug", {
       status: NimbusExperimentStatusEnum.LIVE,
       publishStatus: NimbusExperimentPublishStatusEnum.DIRTY,
+      canReview: true,
     });
-    const mutationMock = createStatusMutationMock(rollout.id!);
+    const mutationMock = createFullStatusMutationMock(
+      rollout.id!,
+      NimbusExperimentStatusEnum.LIVE,
+      NimbusExperimentStatusEnum.LIVE,
+      NimbusExperimentPublishStatusEnum.REVIEW,
+      CHANGELOG_MESSAGES.REQUESTED_REVIEW_UPDATE,
+    );
+    render(<Subject mocks={[mockRollout, mockRollout, mutationMock]} />);
 
-    render(<Subject mocks={[mockRollout, mutationMock]} />);
+    const updateButton = await screen.findByTestId("update-live-to-review");
+    expect(updateButton).toBeEnabled();
+    await act(async () => void fireEvent.click(updateButton));
 
-    const submitButton = await screen.findByTestId("update-live-to-review");
-    expect(submitButton!).toBeEnabled();
-    await act(async () => void fireEvent.click(submitButton));
+    await screen.findByTestId("request-live-update-alert");
   });
 
   it("handles cancelled Launch to Review as expected", async () => {
@@ -397,7 +405,7 @@ describe("PageSummary", () => {
     );
     render(<Subject mocks={[mockRollout, mockRollout, mutationMock]} />);
     const approveButton = await screen.findByTestId("approve-request");
-    expect(approveButton).toHaveTextContent("Approve and Update Rollout");
+    expect(approveButton).toHaveTextContent("Approve");
     fireEvent.click(approveButton);
     const openRemoteSettingsButton = await screen.findByTestId(
       "open-remote-settings",
@@ -418,9 +426,7 @@ describe("PageSummary", () => {
       NimbusExperimentPublishStatusEnum.DIRTY,
       expectedReason,
     );
-    render(<Subject mocks={[mockRollout, mutationMock]} />);
-    await screen.findByText("Approve and Update Rollout");
-
+    render(<Subject mocks={[mockRollout, mockRollout, mutationMock]} />);
     const rejectButton = await screen.findByTestId("reject-request");
     fireEvent.click(rejectButton);
 

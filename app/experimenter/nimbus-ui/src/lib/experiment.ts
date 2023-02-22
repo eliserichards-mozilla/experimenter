@@ -54,7 +54,7 @@ export function getStatus(
       status === NimbusExperimentStatusEnum.LIVE &&
       publishStatus === NimbusExperimentPublishStatusEnum.REVIEW &&
       statusNext === NimbusExperimentStatusEnum.LIVE &&
-      isEnrollmentPausePending === false,
+      isEnrollmentPaused === false,
     updateRequestedWaiting:
       isRollout === true &&
       status === NimbusExperimentStatusEnum.LIVE &&
