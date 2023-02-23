@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+import { LIFECYCLE_REVIEW_FLOWS } from "src/lib/constants";
 import {
   applicationSortSelector,
   channelSortSelector,
@@ -13,6 +14,7 @@ import {
   firefoxMaxVersionSortSelector,
   firefoxMinVersionSortSelector,
   getStatus,
+  getSummaryAction,
   ownerUsernameSortSelector,
   populationPercentSortSelector,
   resultsReadySortSelector,
@@ -73,6 +75,76 @@ describe("getStatus", () => {
 
     experiment.publishStatus = NimbusExperimentPublishStatusEnum.WAITING;
     expect(getStatus(experiment).updateRequestedWaiting).toBeTruthy();
+  });
+});
+
+describe("getSummaryAction", () => {
+  it("correctly returns summary action title", () => {
+    experiment.status = NimbusExperimentStatusEnum.LIVE;
+    experiment.publishStatus = NimbusExperimentPublishStatusEnum.IDLE;
+    let status = getStatus(experiment);
+    expect(getSummaryAction(status, experiment.canReview)).toEqual(
+      ""
+    );
+
+    experiment.status = NimbusExperimentStatusEnum.DRAFT;
+    experiment.statusNext = null;
+    experiment.canReview = true;
+    status = getStatus(experiment);
+    expect(getSummaryAction(status, experiment.canReview)).toEqual(
+      "Request Launch"
+    );
+
+    experiment.publishStatus = NimbusExperimentPublishStatusEnum.REVIEW;
+    status = getStatus(experiment);
+    expect(getSummaryAction(status, experiment.canReview)).toEqual(
+      LIFECYCLE_REVIEW_FLOWS.LAUNCH["reviewSummary"]
+    );
+    
+    experiment.publishStatus = NimbusExperimentPublishStatusEnum.APPROVED;
+    status = getStatus(experiment);
+    expect(getSummaryAction(status, experiment.canReview)).toEqual(
+      LIFECYCLE_REVIEW_FLOWS.LAUNCH["reviewSummary"]
+    );
+ 
+    experiment.publishStatus = NimbusExperimentPublishStatusEnum.WAITING;
+    status = getStatus(experiment);
+    expect(getSummaryAction(status, experiment.canReview)).toEqual(
+      LIFECYCLE_REVIEW_FLOWS.LAUNCH["reviewSummary"]
+    );
+
+    experiment.status = NimbusExperimentStatusEnum.LIVE;
+    experiment.publishStatus = NimbusExperimentPublishStatusEnum.IDLE;
+    status = getStatus(experiment);
+    expect(getSummaryAction(status, experiment.canReview)).toEqual(
+      ""
+    );
+
+    experiment.publishStatus = NimbusExperimentPublishStatusEnum.DIRTY;
+    status = getStatus(experiment);
+    expect(getSummaryAction(status, experiment.canReview)).toEqual(
+      LIFECYCLE_REVIEW_FLOWS.UPDATE["reviewSummary"]
+    ); 
+    
+    experiment.publishStatus = NimbusExperimentPublishStatusEnum.REVIEW;
+    experiment.statusNext = NimbusExperimentStatusEnum.LIVE;
+    status = getStatus(experiment);
+    expect(getSummaryAction(status, experiment.canReview)).toEqual(
+      LIFECYCLE_REVIEW_FLOWS.UPDATE["reviewSummary"]
+    );  
+    
+    experiment.publishStatus = NimbusExperimentPublishStatusEnum.REVIEW;
+    experiment.statusNext = NimbusExperimentStatusEnum.COMPLETE;
+    status = getStatus(experiment);
+    expect(getSummaryAction(status, experiment.canReview)).toEqual(
+      LIFECYCLE_REVIEW_FLOWS.END["reviewSummary"]
+    );
+    
+    experiment.canReview = false;
+    status = getStatus(experiment);
+    expect(getSummaryAction(status, experiment.canReview)).toEqual(
+      LIFECYCLE_REVIEW_FLOWS.END["requestSummary"]
+    );
   });
 });
 
