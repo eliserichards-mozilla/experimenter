@@ -13,7 +13,6 @@ import Head from "src/components/Head";
 import FormLaunchDraftToPreview from "src/components/PageSummary/FormLaunchDraftToPreview";
 import FormLaunchDraftToReview from "src/components/PageSummary/FormLaunchDraftToReview";
 import FormLaunchPreviewToReview from "src/components/PageSummary/FormLaunchPreviewToReview";
-import FormUpdateLiveToReview from "src/components/PageSummary/FormUpdateLiveToReview";
 import Summary from "src/components/Summary";
 import SummaryTimeline from "src/components/Summary/SummaryTimeline";
 import { useChangeOperationMutation, useReviewCheck } from "src/hooks";
@@ -54,8 +53,8 @@ const PageSummary = (props: RouteComponentProps) => {
       onEndReviewRejectedClicked,
       onPauseReviewApprovedClicked,
       onPauseReviewRejectedClicked,
-      onUpdateClicked,
       onUpdateReviewApprovedClicked,
+      onUpdateReviewRejectedClicked,
     ],
   } = useChangeOperationMutation(
     experiment,
@@ -112,14 +111,14 @@ const PageSummary = (props: RouteComponentProps) => {
     {
       status: NimbusExperimentStatusEnum.LIVE,
       statusNext: NimbusExperimentStatusEnum.LIVE,
-      publishStatus: NimbusExperimentPublishStatusEnum.REVIEW,
-      changelogMessage: CHANGELOG_MESSAGES.REQUESTED_REVIEW_UPDATE,
+      publishStatus: NimbusExperimentPublishStatusEnum.APPROVED,
+      changelogMessage: CHANGELOG_MESSAGES.REVIEW_APPROVED_UPDATE,
     },
     {
       status: NimbusExperimentStatusEnum.LIVE,
-      statusNext: NimbusExperimentStatusEnum.LIVE,
-      publishStatus: NimbusExperimentPublishStatusEnum.APPROVED,
-      changelogMessage: CHANGELOG_MESSAGES.REVIEW_APPROVED_UPDATE,
+      statusNext: null,
+      publishStatus: NimbusExperimentPublishStatusEnum.DIRTY,
+      changelogMessage: CHANGELOG_MESSAGES.RETURNED_TO_LIVE,
     },
   );
 
@@ -160,7 +159,7 @@ const PageSummary = (props: RouteComponentProps) => {
       };
     } else if (status.updateRequested) {
       return {
-        rejectChange: () => {},
+        rejectChange: onUpdateReviewRejectedClicked,
         approveChange: onUpdateReviewApprovedClicked,
         ...LIFECYCLE_REVIEW_FLOWS.UPDATE,
       };
@@ -266,15 +265,6 @@ const PageSummary = (props: RouteComponentProps) => {
               isLoading,
               onSubmit: onLaunchClicked,
               onBackToDraft: onBackToDraftClicked,
-            }}
-          />
-        )}
-
-        {status.live && status.dirty && (
-          <FormUpdateLiveToReview
-            {...{
-              isLoading,
-              onSubmit: onUpdateClicked,
             }}
           />
         )}
