@@ -84,20 +84,21 @@ const Summary = ({ experiment, refetch }: SummaryProps) => {
           {submitError}
         </Alert>
       )}
+
+      {status.dirty && (
+        <RequestLiveUpdate
+          {...{ isLoading, onSubmit: onRequestUpdateClicked }}
+        />
+      )}
+
       {!status.complete && (
         <Card className="border-left-0 border-right-0 border-bottom-0">
           <Card.Header as="h5">Actions</Card.Header>
           <Card.Body>
-            {status.dirty && (
-                <RequestLiveUpdate
-                  {...{ isLoading, onSubmit: onRequestUpdateClicked }}
-                />
-              )}
-
             {status.live &&
               !status.approved &&
               !status.review &&
-              status.idle &&
+              (status.idle || status.dirty) &&
               !status.pauseRequested &&
               !experiment.isEnrollmentPaused && (
                 <EndEnrollment
@@ -108,7 +109,7 @@ const Summary = ({ experiment, refetch }: SummaryProps) => {
             {status.live &&
               !status.review &&
               !status.endRequested &&
-              status.idle && (
+              (status.idle || status.dirty) && (
                 <EndExperiment
                   {...{ isLoading, onSubmit: onConfirmEndClicked }}
                 />

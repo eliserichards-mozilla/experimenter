@@ -40,4 +40,4 @@ const RequestLiveUpdate = ({
   );
 };
 
-export default FormUpdateLiveToReview;
+export default RequestLiveUpdate;
