@@ -18,7 +18,7 @@ import TableBranches from "src/components/Summary/TableBranches";
 import TableOverview from "src/components/Summary/TableOverview";
 import TableRiskMitigation from "src/components/Summary/TableRiskMitigation";
 import { useChangeOperationMutation } from "src/hooks";
-import { CHANGELOG_MESSAGES } from "src/lib/constants";
+import { CHANGELOG_MESSAGES, ENABLE_LIVE_ROLLOUTS } from "src/lib/constants";
 import { getStatus } from "src/lib/experiment";
 import { ConfigOptions, getConfigLabel } from "src/lib/getConfigLabel";
 import { getExperiment_experimentBySlug } from "src/types/getExperiment";
@@ -89,7 +89,8 @@ const Summary = ({ experiment, refetch }: SummaryProps) => {
         <Card className="border-left-0 border-right-0 border-bottom-0">
           <Card.Header as="h5">Actions</Card.Header>
           <Card.Body>
-            {status.dirty && (
+            {ENABLE_LIVE_ROLLOUTS &&
+              status.dirty && (
               <RequestLiveUpdate
                 {...{ isLoading, onSubmit: onRequestUpdateClicked }}
               />
