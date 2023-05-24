@@ -67,7 +67,6 @@ const Summary = ({ experiment, refetch }: SummaryProps) => {
         experiment.status === NimbusExperimentStatusEnum.LIVE
           ? NimbusExperimentStatusEnum.LIVE
           : null,
-      isEnrollmentPaused: false,
     },
     {
       publishStatus: NimbusExperimentPublishStatusEnum.REVIEW,
