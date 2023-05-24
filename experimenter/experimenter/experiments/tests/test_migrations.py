@@ -7,11 +7,11 @@ from experimenter.experiments.models import NimbusExperiment as Experiment
 class TestMigration(MigratorTestCase):
     migrate_from = (
         "experiments",
-        "0234_alter_nimbusexperiment_is_rollout_dirty",
+        "0235_auto_20230512_1934",
     )
     migrate_to = (
         "experiments",
-        "0235_auto_20230512_1934",
+        "0236_auto_20230524_1329",
     )
 
     def prepare(self):
@@ -28,9 +28,9 @@ class TestMigration(MigratorTestCase):
             name="test experiment",
             slug="test-experiment",
             application=Experiment.Application.DESKTOP,
-            status=NimbusConstants.Status.DRAFT,
-            publish_status="Dirty",
-            is_rollout_dirty=False,
+            status=NimbusConstants.Status.COMPLETE,
+            publish_status="IDLE",
+            is_paused=False,
         )
 
     def test_migration(self):
@@ -40,5 +40,5 @@ class TestMigration(MigratorTestCase):
         )
 
         experiment = NimbusExperiment.objects.get(slug="test-experiment")
-        self.assertEquals(experiment.publish_status, "Idle")
-        self.assertTrue(experiment.is_rollout_dirty)
+        self.assertEquals(experiment.status, "Complete")
+        self.assertTrue(experiment.is_paused)
