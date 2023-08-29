@@ -91,6 +91,7 @@ INSTALLED_APPS = [
     "experimenter.base",
     "experimenter.changelog",
     "experimenter.experiments",
+    "experimenter.health",
     "experimenter.features",
     "experimenter.jetstream",
     "experimenter.kinto",

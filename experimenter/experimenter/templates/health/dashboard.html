@@ -1,0 +1,70 @@
+{% extends "layout/with_sidebar.html" %}
+
+{% block title %}
+  Feature Health Dashboard
+{% endblock %}
+
+{% block sidebar %}
+  {% include "common/filter_sidebar.html" %}
+{% endblock %}
+
+{% block main_content %}
+  <div class="p-5 sm:p-8 space-y-4">
+    <div class="mb-6 space-y-1">
+      <h1 class="text-2xl sm:text-3xl text-spaceCadet font-medium">Feature Health</h1>
+    </div>
+    <div class="">
+      <div class="card shadow-lg group bg-slate-300 rounded-2xl ps-4 pt-4 pb-4">
+        <div class="container">
+          <h4><b>aboutWelcome</b></h4>
+        </div>
+        <div class="container">
+          <h4><b>Status</b></h4>
+          Healthy 💪
+        </div>
+      </div>
+      <br/>
+      <div class="card shadow-lg group bg-slate-300 rounded-2xl ps-4 pt-4 pb-4">
+        <div class="container">
+          <h4><b>CFR (Firefox Desktop)</b></h4>
+        </div>
+        <div class="container">
+          <h4><b>Status</b></h4>
+          Healthy 💪
+        </div>
+      </div>
+      <br/>
+      <div class="card shadow-lg group bg-slate-300 rounded-2xl ps-4 pt-4 pb-4">
+        <div class="container">
+          <h4><b>cookie-banner</b></h4>
+        </div>
+        <div class="container">
+          <h4><b>Status</b></h4>
+          Healthy 💪
+        </div>
+      </div>
+      
+      {% if feature_configs %}
+        <p>hello world</p>
+        
+        {% comment %} 
+          - want to use getConfig_nimbusConfig to get allFeatureConfigs 
+            (or getConfig_nimbusConfig_allFeatureConfigs)
+          - 
+        {% endcomment %}
+        {% for config in feature_configs %}
+        <div class="card">
+          <div class="container">
+            <h4><b>config.name</b></h4>
+          </div>
+          <div class="container">
+            <h4><b>Status</b></h4>
+            Healthy 💪
+          </div>
+        </div>
+        
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

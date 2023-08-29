@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.views.generic.base import RedirectView
 
+from experimenter.health.views import NimbusFeatureHealthView
 from experimenter.legacy.legacy_experiments.views import (
     ExperimentListView,
     NimbusUIView,
@@ -25,6 +26,7 @@ urlpatterns = [
     re_path(r"^admin/", admin.site.urls),
     re_path(r"^history/", include("experimenter.changelog.urls")),
     re_path(r"^experiments/", include("experimenter.legacy.legacy_experiments.urls")),
+    re_path(r"^health/", NimbusFeatureHealthView.as_view()),
     re_path(r"^nimbus/", NimbusUIView.as_view(), name="nimbus-list"),
     re_path(r"^nimbus/(?P<slug>[\w-]+)/", NimbusUIView.as_view(), name="nimbus-detail"),
     re_path(r"^legacy/$", ExperimentListView.as_view(), name="home"),
