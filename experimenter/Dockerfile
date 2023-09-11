@@ -117,3 +117,7 @@ COPY --from=ui /experimenter/experimenter/legacy/legacy-ui/assets/ /experimenter
 COPY --from=ui /experimenter/experimenter/nimbus-ui/build/ /experimenter/experimenter/nimbus-ui/build/
 COPY --from=ui /experimenter/experimenter/theme/static/ /experimenter/experimenter/theme/static/
 COPY --from=ui /experimenter/experimenter/static/scripts/ /experimenter/experimenter/static/scripts/
+
+# Fetch FML megazord from app-services and generate bindings
+RUN cargo build --manifest-path megazords/nimbus-experimenter/Cargo.toml --release
+RUN cargo uniffi-bindgen generate components/support/nimbus-fml/src/fml.udl --language python
