@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 from packaging import version as version_packaging
-from rust_fml import FmlClient
+from rust_fml import FmlClient, FmlFeatureInspector
 
 from experimenter.settings import BASE_DIR
 
@@ -16,12 +16,31 @@ class NimbusFmlLoader:
         self.channel: str = channel
         self.application_data = self.get_application_data(application, file_location)
 
+    # Todo: Add versioning
     def get_fml_clients(self, versions: list[str]) -> list[FmlClient]:
         if not self.application_data:
             return None
         refs = self.get_version_refs(versions)
         file_path = self.get_file_path()
         return [self.create_client(file_path, self.channel, r) for r in refs]
+
+    def get_fml_inspectors(
+        self,
+        fml_clients: list[FmlClient],
+        blob: str,
+    ) -> list[FmlFeatureInspector]:
+        if not self.application_data:
+            return None
+        return [client.get_feature_inspector() for client in fml_clients]
+
+    def get_fml_errors(self, blob: str):
+        if not self.application_data:
+            return []
+        # Todo: Add versioning
+        clients = self.get_fml_clients([])
+        inspectors = [client.get_fml_inspectors(blob) for client in clients]
+        errors = [inspector.get_errors(blob) for inspector in inspectors]
+        return errors
 
     @staticmethod
     def get_application_data(application_name, file_location=BASE_PATH):
