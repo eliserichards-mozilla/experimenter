@@ -1,5 +1,4 @@
 import json
-import logging
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, status, viewsets
@@ -12,8 +11,6 @@ from experimenter.experiments.api.v6.serializers import (
 )
 from experimenter.experiments.models import NimbusExperiment
 from experimenter.features.manifests.nimbus_fml_loader import NimbusFmlLoader
-
-logger = logging.getLogger()
 
 
 class NimbusExperimentViewSet(
@@ -81,22 +78,9 @@ class NimbusFmlDiagnosticsApi(APIView):
         self.schema = NimbusFmlDiagnosticsApiSchema
         application = request.POST.get("application")
         channel = request.POST.get("channel")
-        request.POST.get("blob")
+        blob = request.POST.get("blob")
 
         loader = NimbusFmlLoader(application, channel)
-        logger.log(
-            "NimbusFmlLoader created for application"
-            f"{loader.application} and channel {loader.channel}."
-        )
-        # todo: remove temporary errors and retrieve errors
-        # from FML loader
-        temp_error = json.dump(
-            {
-                "line": 1,
-                "col": 1,
-                "message": "Incorrect type",
-                "highlight": "error",
-            }
-        )
-
-        return Response(temp_error, status=status.HTTP_201_CREATED)
+        fml_errors = loader.get_fml_errors(blob)
+        
+        return Response(fml_errors, status=status.HTTP_201_CREATED)
