@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -7,6 +8,7 @@ from rust_fml import FmlClient, FmlFeatureInspector
 
 from experimenter.settings import BASE_DIR
 
+logger = logging.getLogger()
 
 class NimbusFmlLoader:
     BASE_PATH = Path(BASE_DIR) / "features" / "manifests" / "apps.yaml"
@@ -27,11 +29,8 @@ class NimbusFmlLoader:
     def get_fml_inspectors(
         self,
         fml_clients: list[FmlClient],
-        blob: str,
     ) -> list[FmlFeatureInspector]:
-        if not self.application_data:
-            return None
-        return [client.get_feature_inspector() for client in fml_clients]
+        return [self.get_inspector(client) for client in fml_clients]
 
     def get_fml_errors(self, blob: str):
         if not self.application_data:
@@ -39,7 +38,7 @@ class NimbusFmlLoader:
         # Todo: Add versioning
         clients = self.get_fml_clients([])
         inspectors = [client.get_fml_inspectors(blob) for client in clients]
-        errors = [inspector.get_errors(blob) for inspector in inspectors]
+        errors = [self.get_errors(inspector, blob) for inspector in inspectors]
         return errors
 
     @staticmethod
@@ -89,3 +88,9 @@ class NimbusFmlLoader:
 
     def create_client(self, path: str, channel: str, ref: str) -> FmlClient:
         return FmlClient.new_with_ref(path, channel, ref)
+
+    def get_inspector(self, client: FmlClient) -> FmlFeatureInspector:
+        return client.get_feature_inspector()
+
+    def get_error(self, inspector: FmlFeatureInspector, blob: str) -> FmlFeatureInspector:
+        return inspector.get_error(blob)

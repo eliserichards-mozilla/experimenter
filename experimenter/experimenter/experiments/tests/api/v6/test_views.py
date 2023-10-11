@@ -203,8 +203,8 @@ class TestNimbusFmlDiagnosticsApi(TestCase):
         },
     ]
 
-    @mock.patch("experimenter.experiments.api.v6.views.NimbusFmlDiagnosticsApi.post")
-    def test_get_fml_diagnostics(self, mock_fetch_fml_diagnostics):
+    @mock.patch("experimenter.features.manifests.NimbusFmlLoader.get_fml_errors")
+    def test_get_fml_diagnostics(self, mock_get_fml_errors):
         test_blob = "hello world"
         fml_response = Response()
         fml_response.content = self.fml_diagnostics
