@@ -1,11 +1,9 @@
-from django.conf.urls import re_path
 from rest_framework.routers import SimpleRouter
 
 from experimenter.experiments.api.v6.views import (
     NimbusExperimentDraftViewSet,
     NimbusExperimentFirstRunViewSet,
     NimbusExperimentViewSet,
-    NimbusFmlDiagnosticsApi,
 )
 
 router = SimpleRouter()
@@ -20,12 +18,4 @@ router.register(
     NimbusExperimentDraftViewSet,
     "nimbus-experiment-draft-rest",
 )
-
 urlpatterns = router.urls
-urlpatterns += [
-    re_path(
-        r"nimbus-fml-diagnostics",
-        NimbusFmlDiagnosticsApi.as_view(),
-        name="nimbus-fml-diagnostics-api",
-    ),
-]

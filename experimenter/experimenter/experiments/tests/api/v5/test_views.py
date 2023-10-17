@@ -8,6 +8,8 @@ from experimenter.experiments.api.v5.serializers import (
     NimbusConfigurationDataClass,
     NimbusConfigurationSerializer,
     NimbusExperimentCsvSerializer,
+    NimbusFmlErrorDataClass,
+    NimbusFmlErrorSerializer,
 )
 from experimenter.experiments.api.v5.views import NimbusExperimentCsvRenderer
 from experimenter.experiments.models import NimbusExperiment
@@ -114,4 +116,16 @@ class TestNimbusConfigurationView(MockSizingDataMixin, TestCase):
         self.assertEqual(
             response.json(),
             NimbusConfigurationSerializer(NimbusConfigurationDataClass()).data,
+        )
+
+class TestNimbusFmlErrorsView(TestCase):
+    def test_nimbus_fml_error_view_returns_error_data(self):
+        response = self.client.get(
+            reverse("nimbus-fml-errors"),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            NimbusFmlErrorSerializer(NimbusFmlErrorDataClass()).data,
         )

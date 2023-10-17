@@ -92,5 +92,5 @@ class NimbusFmlLoader:
     def get_inspector(self, client: FmlClient) -> FmlFeatureInspector:
         return client.get_feature_inspector()
 
-    def get_error(self, inspector: FmlFeatureInspector, blob: str) -> FmlFeatureInspector:
+    def get_error(self, inspector: FmlFeatureInspector, blob: str):
         return inspector.get_error(blob)

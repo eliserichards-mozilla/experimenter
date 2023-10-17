@@ -5,6 +5,7 @@ from graphene_file_upload.django import FileUploadGraphQLView
 from experimenter.experiments.api.v5.views import (
     NimbusConfigurationView,
     NimbusExperimentCsvListView,
+    NimbusFmlErrorsView,
 )
 
 urlpatterns = [
@@ -19,4 +20,5 @@ urlpatterns = [
         name="nimbus-experiments-csv",
     ),
     url(r"config/$", NimbusConfigurationView.as_view(), name="nimbus-api-config"),
+    url(r"nimbus-fml-errors/$", NimbusFmlErrorsView.as_view(), name="nimbus-fml-errors"),
 ]
