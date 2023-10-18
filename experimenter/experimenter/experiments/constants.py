@@ -556,6 +556,8 @@ Optional - We believe this outcome will <describe impact> on <core metric>
         "experiments"
     )
 
+    ERROR_FML_VALIDATION = "FML errors occurred during validation"
+
     # Analysis can be computed starting the week after enrollment
     # completion for "week 1" of the experiment. However, an extra
     # buffer day is added for Jetstream to compute the results.

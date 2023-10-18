@@ -10,6 +10,7 @@ from experimenter.settings import BASE_DIR
 
 logger = logging.getLogger()
 
+
 class NimbusFmlLoader:
     BASE_PATH = Path(BASE_DIR) / "features" / "manifests" / "apps.yaml"
 
@@ -29,16 +30,24 @@ class NimbusFmlLoader:
     def get_fml_inspectors(
         self,
         fml_clients: list[FmlClient],
+        feature_id: str,
     ) -> list[FmlFeatureInspector]:
-        return [self.get_inspector(client) for client in fml_clients]
+        return [self.get_inspector(client, feature_id) for client in fml_clients]
 
-    def get_fml_errors(self, blob: str):
+    def get_fml_errors(self, blob: str, feature_id: str):
+        """
+        Fetch errors from the FML. This method creates FML clients, which are used by
+        `FmlFeatureInspector`s to fetch errors based on the blob of text and the
+        given feature.
+
+        returns A list of feature manifest errors.
+        """
         if not self.application_data:
             return []
         # Todo: Add versioning
         clients = self.get_fml_clients([])
-        inspectors = [client.get_fml_inspectors(blob) for client in clients]
-        errors = [self.get_errors(inspector, blob) for inspector in inspectors]
+        inspectors = [self.get_fml_inspectors(client, feature_id) for client in clients]
+        errors = [self.get_error(inspector, blob) for inspector in inspectors]
         return errors
 
     @staticmethod
@@ -89,8 +98,8 @@ class NimbusFmlLoader:
     def create_client(self, path: str, channel: str, ref: str) -> FmlClient:
         return FmlClient.new_with_ref(path, channel, ref)
 
-    def get_inspector(self, client: FmlClient) -> FmlFeatureInspector:
-        return client.get_feature_inspector()
+    def get_inspector(self, client: FmlClient, feature_id: str) -> FmlFeatureInspector:
+        return client.get_feature_inspector(feature_id) # code coverage needed
 
     def get_error(self, inspector: FmlFeatureInspector, blob: str):
-        return inspector.get_error(blob)
+        return inspector.get_error(blob)# code coverage needed

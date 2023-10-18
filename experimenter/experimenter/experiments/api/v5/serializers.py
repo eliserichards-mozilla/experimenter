@@ -21,7 +21,6 @@ from experimenter.base.models import (
     SiteFlag,
     SiteFlagNameChoices,
 )
-from experimenter.features.manifests.nimbus_fml_loader import NimbusFmlLoader
 from experimenter.experiments.changelog_utils import generate_nimbus_changelog
 from experimenter.experiments.constants import NimbusConstants
 from experimenter.experiments.models import (
@@ -33,6 +32,7 @@ from experimenter.experiments.models import (
     NimbusFeatureConfig,
     NimbusVersionedSchema,
 )
+from experimenter.features.manifests.nimbus_fml_loader import NimbusFmlLoader
 from experimenter.kinto.tasks import (
     nimbus_check_kinto_push_queue_by_collection,
     nimbus_synchronize_preview_experiments_in_kinto,
@@ -360,22 +360,6 @@ class NimbusFmlErrorDataClass:
     message: str
     highlight: str
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        fields = ["line", "col", "message", "highlight"]
-
-        data["line"] = None
-        data["col"] = None
-        data["message"] = None
-        data["highlight"] = None
-
-        for field in fields:
-            if instance.field.exists():
-                data[field] = (
-                    instance.field
-                )
-
-        return data
 
 class NimbusConfigurationSerializer(DataclassSerializer[NimbusConfigurationDataClass]):
     class Meta:
@@ -384,7 +368,7 @@ class NimbusConfigurationSerializer(DataclassSerializer[NimbusConfigurationDataC
 
 class NimbusFmlErrorSerializer(DataclassSerializer[NimbusFmlErrorDataClass]):
     class Meta:
-        dataclass = NimbusConfigurationDataClass
+        dataclass = NimbusFmlErrorDataClass
 
 
 _SerializerT = typing.TypeVar("_SerializerT", bound=serializers.ModelSerializer)
@@ -1415,7 +1399,7 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
         return value
 
     def _validate_feature_value_against_schema(
-        self, feature_config, value, localizations, channel
+        self, feature_config, value, localizations
     ):
         if schema := feature_config.schemas.get(version=None).schema:
             json_schema = json.loads(schema)
@@ -1441,8 +1425,23 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
                         *schema_errors,
                     ]
 
-            self._validate_schema_fml(feature_config.application, channel, json_schema)
+        return None
 
+    def _validate_schema_against_fml(self, feature_config, channel):
+        if feature_config.application != NimbusExperiment.Application.DESKTOP:
+            if schema := feature_config.schemas.get(version=None).schema:
+                json_schema = json.loads(schema)
+
+                if fml_errors := self._validate_schema_fml(
+                    feature_config.application,
+                    channel,
+                    feature_config.id,
+                    json_schema,
+                ):
+                    return [
+                        (NimbusConstants.ERROR_FML_VALIDATION),
+                        *fml_errors,
+                    ]
         return None
 
     def _validate_schema(self, obj, schema):
@@ -1451,9 +1450,9 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
         except jsonschema.ValidationError as e:
             return [e.message]
 
-    def _validate_schema_fml(self, application, channel, schema):
+    def _validate_schema_fml(self, application, channel, feature_id, schema):
         loader = NimbusFmlLoader(application, channel)
-        return loader.get_fml_errors(schema)
+        return loader.get_fml_errors(schema, feature_id)
 
     def _validate_feature_configs(self, data):
         feature_configs = data.get("feature_configs", [])
@@ -1482,9 +1481,15 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
                 feature_value_data["feature_config"],
                 feature_value_data["value"],
                 localizations,
-                data.get("channel"),
             ):
                 reference_branch_errors.append({"value": schema_errors})
+                continue
+
+            if fml_errors := self._validate_schema_against_fml(
+                feature_value_data["feature_config"],
+                data.get("channel"),
+            ):
+                reference_branch_errors.append({"value": fml_errors})
                 continue
 
             reference_branch_errors.append({})
@@ -1502,9 +1507,16 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
                     feature_value_data["feature_config"],
                     feature_value_data["value"],
                     localizations,
-                    data.get("channel"),
                 ):
                     treatment_branch_errors.append({"value": schema_errors})
+                    treatment_branches_errors_found = True
+                    continue
+
+                if fml_errors := self._validate_schema_against_fml(
+                    feature_value_data["feature_config"],
+                    data.get("channel"),
+                ):
+                    treatment_branches_errors.append({"value": fml_errors})
                     treatment_branches_errors_found = True
                     continue
 

@@ -118,6 +118,7 @@ class TestNimbusConfigurationView(MockSizingDataMixin, TestCase):
             NimbusConfigurationSerializer(NimbusConfigurationDataClass()).data,
         )
 
+
 class TestNimbusFmlErrorsView(TestCase):
     def test_nimbus_fml_error_view_returns_error_data(self):
         response = self.client.get(
