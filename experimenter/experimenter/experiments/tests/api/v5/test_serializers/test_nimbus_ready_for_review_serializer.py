@@ -246,7 +246,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             NimbusExperiment.Application.FOCUS_IOS,
         ]
     )
-    def test_rollout_min_version_under_115_shows_warning(self, application):
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
+    def test_rollout_min_version_under_115_shows_warning(
+        self, application, mock_get_fml_errors
+    ):
+        mock_get_fml_errors.return_value = []
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
             firefox_min_version=NimbusExperiment.Version.FIREFOX_114,
@@ -319,7 +325,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             NimbusExperiment.Application.FOCUS_IOS,
         ]
     )
-    def test_rollout_min_version_over_115_no_warning(self, application):
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
+    def test_rollout_min_version_over_115_no_warning(
+        self, application, mock_get_fml_errors
+    ):
+        mock_get_fml_errors.return_value = []
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
             application=application,
@@ -380,9 +392,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             ),
         ]
     )
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
     def test_valid_experiments_supporting_languages_versions(
-        self, application, firefox_version
+        self, application, firefox_version, mock_get_fml_errors
     ):
+        mock_get_fml_errors.return_value = []
         experiment_1 = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
             application=application,
@@ -441,7 +457,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             ),
         ]
     )
-    def test_valid_experiments_with_all_languages(self, application, firefox_version):
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
+    def test_valid_experiments_with_all_languages(
+        self, application, firefox_version, mock_get_fml_errors
+    ):
+        mock_get_fml_errors.return_value = []
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
             application=application,
@@ -480,9 +502,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             ),
         ]
     )
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
     def test_invalid_experiments_with_specific_languages(
-        self, application, firefox_version
+        self, application, firefox_version, mock_get_fml_errors
     ):
+        mock_get_fml_errors.return_value = []
         language = LanguageFactory.create()
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
@@ -525,9 +551,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             ),
         ]
     )
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
     def test_valid_experiments_supporting_countries_versions_default_as_all_countries(
-        self, application, firefox_version
+        self, application, firefox_version, mock_get_fml_errors
     ):
+        mock_get_fml_errors.return_value = []
         experiment_1 = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
             application=application,
@@ -567,9 +597,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             ),
         ]
     )
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
     def test_valid_experiments_supporting_countries_versions_selecting_specific_country(
-        self, application, firefox_version
+        self, application, firefox_version, mock_get_fml_errors
     ):
+        mock_get_fml_errors.return_value = []
         # selected countries
         country = CountryFactory.create()
         experiment_1 = NimbusExperimentFactory.create_with_lifecycle(
@@ -611,9 +645,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             ),
         ]
     )
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
     def test_valid_experiments_with_country_unsupported_version(
-        self, application, firefox_version
+        self, application, firefox_version, mock_get_fml_errors
     ):
+        mock_get_fml_errors.return_value = []
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
             application=application,
@@ -653,9 +691,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             ),
         ]
     )
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
     def test_invalid_experiments_with_specific_countries(
-        self, application, firefox_version
+        self, application, firefox_version, mock_get_fml_errors
     ):
+        mock_get_fml_errors.return_value = []
         country = CountryFactory.create()
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
@@ -1476,6 +1518,54 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             serializer.errors["reference_branch"]["feature_values"][0]["value"][0],
         )
         self.assertEqual(len(serializer.errors), 2)
+
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
+    def test_serializer_fml_does_not_validate_desktop(self, mock_get_fml_errors):
+        experiment = NimbusExperimentFactory.create_with_lifecycle(
+            NimbusExperimentFactory.Lifecycles.CREATED,
+            status=NimbusExperiment.Status.DRAFT,
+            application=NimbusExperiment.Application.DESKTOP,
+            channel=NimbusExperiment.Channel.RELEASE,
+            warn_feature_schema=False,
+            feature_configs=[
+                NimbusFeatureConfigFactory.create(
+                    application=NimbusExperiment.Application.DESKTOP,
+                    schemas=[
+                        NimbusVersionedSchemaFactory.build(
+                            version=None,
+                            schema=REF_JSON_SCHEMA,
+                        )
+                    ],
+                )
+            ],
+            is_sticky=True,
+            firefox_min_version=NimbusExperiment.MIN_REQUIRED_VERSION,
+        )
+        reference_feature_value = experiment.reference_branch.feature_values.get()
+        reference_feature_value.value = """\
+            {
+            "bar": {
+                "baz": "baz",
+                "qux": 123
+            }
+            }
+        """.strip()
+        reference_feature_value.save()
+
+        serializer = NimbusReviewSerializer(
+            experiment,
+            data=NimbusReviewSerializer(
+                experiment,
+                context={"user": self.user},
+            ).data,
+            context={"user": self.user},
+        )
+
+        self.assertTrue(serializer.is_valid())
+        mock_get_fml_errors.assert_not_called()
+        self.assertEqual(len(serializer.errors), 0)
 
     def test_valid_branches_for_rollout(self):
         experiment = NimbusExperimentFactory.create_with_lifecycle(
@@ -2391,7 +2481,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
-    def test_return_warning_for_proposed_release_date_when_not_first_run(self):
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
+    def test_return_warning_for_proposed_release_date_when_not_first_run(
+        self, mock_get_fml_errors
+    ):
+        mock_get_fml_errors.return_value = []
         release_date = datetime.date.today()
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
@@ -2418,7 +2514,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             },
         )
 
-    def test_return_valid_for_proposed_release_date_when_first_run(self):
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
+    def test_return_valid_for_proposed_release_date_when_first_run(
+        self, mock_get_fml_errors
+    ):
+        mock_get_fml_errors.return_value = []
         release_date = datetime.date.today()
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
@@ -2474,7 +2576,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             list(NimbusExperiment.Application),
         )
     )
-    def test_targeting_exclude_require_application(self, field, app1, app2):
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
+    def test_targeting_exclude_require_application(
+        self, field, app1, app2, mock_get_fml_errors
+    ):
+        mock_get_fml_errors.return_value = []
         other = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
             application=app1,
@@ -2519,7 +2627,13 @@ class TestNimbusReviewSerializerSingleFeature(TestCase):
             ("excluded_experiments", "required_experiments"),
         )
     )
-    def test_targeting_exclude_require_min_version(self, application, field):
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
+    def test_targeting_exclude_require_min_version(
+        self, application, field, mock_get_fml_errors
+    ):
+        mock_get_fml_errors.return_value = []
         other = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
             application=application,
@@ -3142,7 +3256,13 @@ class TestNimbusReviewSerializerMultiFeature(TestCase):
             ),
         )
     )
-    def test_minimum_version(self, application, firefox_min_version):
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
+    def test_minimum_version(
+        self, application, firefox_min_version, mock_get_fml_errors
+    ):
+        mock_get_fml_errors.return_value = []
         valid_version = NimbusExperiment.Version.parse(
             firefox_min_version
         ) >= NimbusExperiment.Version.parse(
