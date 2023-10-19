@@ -1,4 +1,4 @@
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, GenericAPIView
 from rest_framework.views import APIView
 from rest_framework_csv.renderers import CSVRenderer
 
@@ -6,6 +6,8 @@ from experimenter.experiments.api.v5.serializers import (
     NimbusConfigurationDataClass,
     NimbusConfigurationSerializer,
     NimbusExperimentCsvSerializer,
+    NimbusFmlErrorDataClass,
+    NimbusFmlErrorListDataClass,
     NimbusFmlErrorSerializer,
 )
 from experimenter.experiments.models import NimbusExperiment
@@ -46,8 +48,9 @@ class NimbusConfigurationView(RetrieveAPIView):
         return NimbusConfigurationDataClass()
 
 
-class NimbusFmlErrorsView(APIView):
+class NimbusFmlErrorsView(GenericAPIView):
     serializer_class = NimbusFmlErrorSerializer
+    queryset = None
 
     def get_object(self):
-        return list(NimbusConfigurationDataClass()) # code coverage needed
+        return NimbusFmlErrorListDataClass()

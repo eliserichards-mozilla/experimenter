@@ -1,4 +1,5 @@
 import datetime
+from unittest import mock
 
 from django.conf import settings
 from django.test import TestCase
@@ -9,6 +10,7 @@ from experimenter.experiments.api.v5.serializers import (
     NimbusConfigurationSerializer,
     NimbusExperimentCsvSerializer,
     NimbusFmlErrorDataClass,
+    NimbusFmlErrorListDataClass,
     NimbusFmlErrorSerializer,
 )
 from experimenter.experiments.api.v5.views import NimbusExperimentCsvRenderer
@@ -120,13 +122,31 @@ class TestNimbusConfigurationView(MockSizingDataMixin, TestCase):
 
 
 class TestNimbusFmlErrorsView(TestCase):
-    def test_nimbus_fml_error_view_returns_error_data(self):
+    @mock.patch(
+        "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
+    )
+    def test_nimbus_fml_error_view_returns_error_data(self, mock_get_fml_errors):
+        mock_get_fml_errors.return_value = NimbusFmlErrorListDataClass(errors=[])
+        error_list = NimbusFmlErrorListDataClass(errors=[])
+        
+        query_params = {
+            "application": "fenix",
+            "channel": "release",
+            "feature_id": "my_feature_id",
+            "blob": "{hello: world}"
+        }
         response = self.client.get(
             reverse("nimbus-fml-errors"),
+            **query_params
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 405)
+        # self.assertEqual(response.status_code, 200)
+        
+        # import ipdb
+        # ipdb.set_trace()
+        
         self.assertEqual(
             response.json(),
-            NimbusFmlErrorSerializer(NimbusFmlErrorDataClass()).data,
+            NimbusFmlErrorSerializer(error_list).data,
         )

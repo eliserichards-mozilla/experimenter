@@ -99,7 +99,7 @@ class NimbusFmlLoader:
         return FmlClient.new_with_ref(path, channel, ref)
 
     def get_inspector(self, client: FmlClient, feature_id: str) -> FmlFeatureInspector:
-        return client.get_feature_inspector(feature_id) # code coverage needed
+        return client.get_feature_inspector(feature_id)  # code coverage needed
 
     def get_error(self, inspector: FmlFeatureInspector, blob: str):
-        return inspector.get_error(blob)# code coverage needed
+        return inspector.get_errors(blob)  # code coverage needed

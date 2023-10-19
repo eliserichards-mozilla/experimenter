@@ -352,6 +352,9 @@ class NimbusConfigurationDataClass:
             for outcome in Outcomes.all()
         ]
 
+class NimbusConfigurationSerializer(DataclassSerializer[NimbusConfigurationDataClass]):
+    class Meta:
+        dataclass = NimbusConfigurationDataClass
 
 @dataclass
 class NimbusFmlErrorDataClass:
@@ -360,15 +363,19 @@ class NimbusFmlErrorDataClass:
     message: str
     highlight: str
 
+@dataclass
+class NimbusFmlErrorListDataClass:
+    errors: typing.List[typing.Optional[NimbusFmlErrorDataClass]]
 
-class NimbusConfigurationSerializer(DataclassSerializer[NimbusConfigurationDataClass]):
+class NimbusFmlErrorSerializer(serializers.ListSerializer):
     class Meta:
-        dataclass = NimbusConfigurationDataClass
+        dataclass = NimbusFmlErrorListDataClass
 
-
-class NimbusFmlErrorSerializer(DataclassSerializer[NimbusFmlErrorDataClass]):
-    class Meta:
-        dataclass = NimbusFmlErrorDataClass
+    def to_representation(self, data):
+        return [
+            self.child.to_representation(item)
+            for item in data
+        ]
 
 
 _SerializerT = typing.TypeVar("_SerializerT", bound=serializers.ModelSerializer)

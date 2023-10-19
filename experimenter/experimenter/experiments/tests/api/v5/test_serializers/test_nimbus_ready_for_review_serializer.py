@@ -3259,9 +3259,7 @@ class TestNimbusReviewSerializerMultiFeature(TestCase):
     @mock.patch(
         "experimenter.features.manifests.nimbus_fml_loader.NimbusFmlLoader.get_fml_errors",
     )
-    def test_minimum_version(
-        self, application, firefox_min_version, mock_get_fml_errors
-    ):
+    def test_minimum_version(self, application, firefox_min_version, mock_get_fml_errors):
         mock_get_fml_errors.return_value = []
         valid_version = NimbusExperiment.Version.parse(
             firefox_min_version

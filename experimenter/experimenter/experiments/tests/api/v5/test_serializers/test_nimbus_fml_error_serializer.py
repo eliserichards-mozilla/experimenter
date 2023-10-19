@@ -1,6 +1,4 @@
 from django.test import TestCase
-from experimenter.experiments.constants import NimbusConstants
-from experimenter.experiments.tests.factories import NimbusExperimentFactory, NimbusFeatureConfigFactory
 
 from experimenter.experiments.api.v5.serializers import (
     NimbusFmlErrorDataClass,
