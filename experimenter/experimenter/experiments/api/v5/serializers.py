@@ -1490,14 +1490,49 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
 
         return None
 
-    def _validate_with_fml(self, loader: NimbusFmlLoader, feature_id: str, obj):
-        fml_errors = loader.get_fml_errors(obj, feature_id)
-        if fml_errors := loader.get_fml_errors(obj, feature_id):
+    def _validate_with_fml(
+        self,
+        feature_config: NimbusFeatureConfig, 
+        obj: str, 
+        channel: str,
+        min_version: packaging.version.Version, 
+        max_version: Optional[packaging.version.Version],
+    ):
+        info = feature_config.get_versioned_schemas(min_version, max_version)
+
+        if info.unsupported_in_range:
             return [
-                f"{NimbusExperiment.ERROR_FML_VALIDATION}: "
-                f"{e.message} at line {e.line+1} column {e.col}"
-                for e in fml_errors
+                NimbusConstants.ERROR_FEATURE_CONFIG_UNSUPPORTED_IN_RANGE.format(
+                    feature_config=feature_config,
+                )
             ]
+
+        errors = []
+
+        for version in info.unsupported_versions:
+            errors.append(
+                NimbusConstants.ERROR_FEATURE_CONFIG_UNSUPPORTED_IN_VERSION.format(
+                    feature_config=feature_config,
+                    version=version,
+                )
+            )
+
+        # Either info.schemas has one element with no version or multiple elements
+        if len(info.schemas) == 1 and info.schemas[0].version is None:
+            versions = []
+        else:
+            versions = [schema.version for schema in info.schemas]
+
+        loader = NimbusFmlLoader.create_loader(feature_config.application)
+
+        for version in versions:
+            if fml_errors := loader.get_fml_errors(obj, feature_config.slug, channel, version):
+                errors.extend(
+                    f"{NimbusExperiment.ERROR_FML_VALIDATION}: "
+                    f"{e.message} at line {e.line+1} column {e.col}"
+                    f"{f' at version {version}' if version is not None else ''}"
+                    for e in fml_errors
+            )
         return None
 
     def _validate_schema(
@@ -1546,7 +1581,7 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
             localizations = None
 
         application = data.get("application")
-        loader = NimbusFmlLoader.create_loader(application, data.get("channel"))
+        
 
         reference_branch_errors = []
 
@@ -1565,9 +1600,11 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
                     continue
 
             elif fml_errors := self._validate_with_fml(
-                loader,
-                feature_value_data["feature_config"].slug,
+                feature_value_data["feature_config"],
                 feature_value_data["value"],
+                data.get("channel"),
+                min_version,
+                max_version,
             ):
                 reference_branch_errors.append({"value": fml_errors})
                 continue
@@ -1596,9 +1633,11 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
                         continue
 
                 elif fml_errors := self._validate_with_fml(
-                    loader,
                     feature_value_data["feature_config"].slug,
                     feature_value_data["value"],
+                    data.get("channel"),
+                    min_version,
+                    max_version,
                 ):
                     treatment_branch_errors.append({"value": fml_errors})
                     treatment_branches_errors_found = True
