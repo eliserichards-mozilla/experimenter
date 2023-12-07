@@ -86,6 +86,6 @@ class NimbusFmlLoader:
                         errors.extend(errs)
                 return errors
         logger.error(
-            "Nimbus FML Loader: Invalid application. Failed to fetch FML errors."
+            "Nimbus FML Loader: Failed to get application. Cannot fetch FML errors."
         )
         return []
