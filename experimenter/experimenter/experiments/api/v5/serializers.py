@@ -1521,14 +1521,41 @@ class NimbusReviewSerializer(serializers.ModelSerializer):
         for schema in schemas_in_range.schemas:
             version = schema.version
             if fml_errors := loader.get_fml_errors(blob, feature_config.slug, version):
-                errors.extend(
-                    [
-                        f"{NimbusExperiment.ERROR_FML_VALIDATION}: {e.message} at line "
-                        f"{e.line+1} column {e.col} at version {version}"
-                        for e in fml_errors
-                    ]
-                )
+                if errs := self._group_errors(version, fml_errors): 
+                    errors.append(errs)
+        return errors
 
+    def _format_fml_errors(
+        self,
+        version: str,
+        errs: list[NimbusFmlErrorDataClass]
+    ):
+        # Groups the FML errors by {message, list[errors]} so that we can
+        # easily iterate through the errors that are related
+        dictionary_errors = {}
+        for e in errs:
+            if dictionary_errors.get(e.message):
+                dictionary_errors[e.message].append(e)
+            else:
+                dictionary_errors[e.message] = [e]
+        
+        errors = []
+        # For every unique error that we have
+        for k in dictionary_errors:
+            last_index = errs[k][len(dictionary_errors[k])-1]
+            error = f"{k} at "
+            # format the error messages that we get, pulling out the version, line, and col
+            # so that we only show the error message itself once, then list all the places
+            # that it is happening
+            for err in dictionary_errors[k]:
+                if err == last_index and len(dictionary_errors[k]) > 1:
+                    error += "and "
+                error += f"line {err.line+1} column {err.col} at version {version}"
+                if err is not last_index:
+                    error += ", "
+                else:
+                    error += ". "
+            errors.append(error)
         return errors
 
     def _validate_schema(

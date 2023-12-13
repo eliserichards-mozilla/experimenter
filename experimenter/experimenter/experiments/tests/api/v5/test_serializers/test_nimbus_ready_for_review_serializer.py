@@ -3246,8 +3246,7 @@ class VersionedFeatureValidationTests(MockFmlErrorMixin, TestCase):
         ]
 
         expected_errors = [
-            f"{NimbusExperiment.ERROR_FML_VALIDATION}: Incorrect value! "
-            f"at line 2 column 0 at version {v.major}.{v.minor}.{v.patch}"
+            f"Incorrect value! at line 2 column 0 at version {v.major}.{v.minor}.{v.patch}. "
             for v in expected_versions
         ]
 
@@ -3342,20 +3341,7 @@ class VersionedFeatureValidationTests(MockFmlErrorMixin, TestCase):
             ),
         ]
         self.setup_get_fml_errors(fml_errors)
-
         versions = [(120, 0, 0), (121, 0, 0)]
-
-        expected_errors = [
-            f"{NimbusExperiment.ERROR_FML_VALIDATION}: "
-            "Incorrect value at line 3 column 0 at version 120.0.0",
-            f"{NimbusExperiment.ERROR_FML_VALIDATION}: "
-            "Incorrect value again at line 1 column 1 at version 120.0.0",
-            f"{NimbusExperiment.ERROR_FML_VALIDATION}: "
-            "Incorrect value at line 3 column 0 at version 121.0.0",
-            f"{NimbusExperiment.ERROR_FML_VALIDATION}: "
-            "Incorrect value again at line 1 column 1 at version 121.0.0",
-        ]
-
         blob = json.dumps({"enabled": {"no": 1}})
 
         feature = NimbusFeatureConfigFactory.create(
@@ -3398,21 +3384,45 @@ class VersionedFeatureValidationTests(MockFmlErrorMixin, TestCase):
         )
 
         self.assertFalse(serializer.is_valid())
+        # import ipdb
+        # ipdb.set_trace()
+
+        expected_errors = [
+            (
+                "{fml_error} at line 3 column 0 at version {version}"
+            ),
+            (
+                "{fml_error} at line 1 column 1 at version {version}"
+            ),
+        ]
+
         self.assertIn(
-            expected_errors[0],
-            serializer.errors["reference_branch"]["feature_values"][0]["value"][2],
+            expected_errors[0].format(
+                fml_error=fml_errors[0].message,
+                version=self.versions[versions[0]],
+            ),
+            serializer.errors["reference_branch"]["feature_values"][0]["value"][1][0]
         )
         self.assertIn(
-            expected_errors[1],
-            serializer.errors["reference_branch"]["feature_values"][0]["value"][3],
+            expected_errors[1].format(
+                fml_error=fml_errors[1].message,
+                version=self.versions[versions[0]],
+            ),
+            serializer.errors["reference_branch"]["feature_values"][0]["value"][1][1],
         )
         self.assertIn(
-            expected_errors[2],
-            serializer.errors["reference_branch"]["feature_values"][0]["value"][0],
+            expected_errors[0].format(
+                fml_error=fml_errors[0].message,
+                version=self.versions[versions[1]],
+            ),
+            serializer.errors["reference_branch"]["feature_values"][0]["value"][0][0],
         )
         self.assertIn(
-            expected_errors[3],
-            serializer.errors["reference_branch"]["feature_values"][0]["value"][1],
+            expected_errors[1].format(
+                fml_error=fml_errors[1].message,
+                version=self.versions[versions[1]],
+            ),
+            serializer.errors["reference_branch"]["feature_values"][0]["value"][0][1],
         )
 
     def test_fml_validate_feature_versioned_range_treatment_branch(self):
@@ -3517,6 +3527,100 @@ class VersionedFeatureValidationTests(MockFmlErrorMixin, TestCase):
 
         self.assertTrue(serializer.is_valid())
         self.assertEqual(serializer.errors, {})
+
+    @parameterized.expand(
+        [
+            (
+                [
+                    NimbusFmlErrorDataClass(
+                        line=1,
+                        col=0,
+                        message="Incorrect value",
+                        highlight="enabled",
+                    ),
+                    NimbusFmlErrorDataClass(
+                        line=0,
+                        col=1,
+                        message="Incorrect value",
+                        highlight="enabled",
+                    ),
+                    NimbusFmlErrorDataClass(
+                        line=0,
+                        col=8,
+                        message="Incorrect value",
+                        highlight="enabled",
+                    ),
+                ],
+                [
+                    f"Incorrect value at line 2 column 0 at version 130.0.0, "
+                    f"line 1 column 1 at version 130.0.0, line 1 column 8 at "
+                    f"version 130.0.0. ",
+                ],
+            ),
+            (
+                [
+                    NimbusFmlErrorDataClass(
+                        line=1,
+                        col=0,
+                        message="Incorrect value",
+                        highlight="enabled",
+                    ),
+                    NimbusFmlErrorDataClass(
+                        line=0,
+                        col=1,
+                        message="Incorrect value",
+                        highlight="enabled",
+                    ),
+                    NimbusFmlErrorDataClass(
+                        line=0,
+                        col=8,
+                        message="Incorrect value",
+                        highlight="enabled",
+                    ),
+                    NimbusFmlErrorDataClass(
+                        line=0,
+                        col=1,
+                        message="Bad FML vibes!",
+                        highlight="chill",
+                    ),
+                    NimbusFmlErrorDataClass(
+                        line=2,
+                        col=2,
+                        message="Bad FML vibes!",
+                        highlight="bill",
+                    ),
+                ],
+                [
+                    f"Incorrect value at line 2 column 0 at version 130.0.0, "
+                    f"line 1 column 1 at version 130.0.0, line 1 column 8 at "
+                    f"version 130.0.0. ",
+                    f"Bad FML vibes! at line 1 column 1 at version 130.0.0, "
+                    f"line 3 column 2 at version 130.0.0. ",
+                ],
+            ),
+        ]
+    )
+    def test_fml_validate_feature_versioned_group_and_format_fml_errors(
+        self, fml_errors, expected_errors,
+    ):
+        self.setup_get_fml_errors(fml_errors)
+        version = "130.0.0"
+
+        experiment = NimbusExperimentFactory.create_with_lifecycle(
+            NimbusExperimentFactory.Lifecycles.CREATED,
+            application=NimbusExperiment.Application.FENIX,
+            firefox_min_version=NimbusExperiment.Version.FIREFOX_130,
+            firefox_max_version=NimbusExperiment.Version.FIREFOX_130,
+        )
+        
+        serializer = NimbusReviewSerializer(
+            experiment,
+            data=NimbusReviewSerializer(experiment, context={"user": self.user}).data,
+            context={"user", self.user},
+        )
+
+        result = serializer._format_fml_errors(version, fml_errors)
+        self.assertEqual(result, expected_errors)
 
 
 class TestNimbusReviewSerializerMultiFeature(MockFmlErrorMixin, TestCase):

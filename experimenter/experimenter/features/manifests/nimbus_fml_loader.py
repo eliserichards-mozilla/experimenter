@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from django.conf import settings
-from rust_fml import FmlClient
+from rust_fml import FmlClient, FmlEditorError
 
 from experimenter.experiments.constants import NimbusConstants
 from experimenter.experiments.models import NimbusFeatureVersion
@@ -81,14 +81,14 @@ class NimbusFmlLoader:
         Returns:
             A list of feature manifest errors.
         """
+        errors = []
         if self.application is not None:
-            errors = []
             if client := self.fml_client(version):
                 if inspector := client.get_feature_inspector(feature_id):
                     if errs := inspector.get_errors(blob):
                         errors.extend(errs)
-                return errors
-        logger.error(
-            "Nimbus FML Loader: Invalid application. Failed to fetch FML errors."
-        )
-        return []
+        else: 
+            logger.error(
+                "Nimbus FML Loader: Invalid application. Failed to fetch FML errors."
+            )
+        return errors
