@@ -4,6 +4,7 @@
 
 import { RegisterOptions } from "react-hook-form";
 import { NimbusExperimentQAStatusEnum } from "src/types/globalTypes";
+import { ReactComponent as CircleQuestion } from "src/images/circle-question.svg";
 
 export const BASE_PATH = "/nimbus";
 
