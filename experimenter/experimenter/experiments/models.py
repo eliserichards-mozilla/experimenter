@@ -772,6 +772,16 @@ class NimbusExperiment(NimbusConstants, TargetingConstants, FilterMixin, models.
                 self.population_percent / Decimal("100.0") * NimbusExperiment.BUCKET_TOTAL
             ),
         )
+    
+    @property
+    def live_multifeature_experiments_exist_for_feature(self):
+        experiments = set()
+        for config in self.feature_configs.all():
+            experiments.extend(NimbusExperiment.objects.filter(experiment__feature_config=config in featureconfig).filter(
+                featureconfigs > 1
+            ).toSet())
+        return experiments.toList()
+
 
     @property
     def can_edit(self):
