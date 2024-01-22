@@ -301,6 +301,7 @@ export interface ExperimentInput {
   secondaryOutcomes?: (string | null)[] | null;
   status?: NimbusExperimentStatusEnum | null;
   statusNext?: NimbusExperimentStatusEnum | null;
+  subscribers?: (string | null)[] | null;
   takeawaysMetricGain?: boolean | null;
   takeawaysGainAmount?: string | null;
   takeawaysQbrLearning?: boolean | null;

@@ -1120,6 +1120,12 @@ class NimbusExperimentSerializer(
 
         return value
 
+    def validate_subscribers(self, subscribers):
+        #     raise serializers.ValidationError(
+        #         f'{self.context["user"]} can not review this experiment.'
+        #     )
+        return subscribers
+
     def validate(self, data):
         data = super().validate(data)
 

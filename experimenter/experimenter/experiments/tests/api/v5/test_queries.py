@@ -116,6 +116,9 @@ class TestNimbusExperimentsQuery(GraphQLTestCase):
                     subscribers {
                         email
                     }
+                    subscribers {
+                        email
+                    }
                 }
             }
             """,
