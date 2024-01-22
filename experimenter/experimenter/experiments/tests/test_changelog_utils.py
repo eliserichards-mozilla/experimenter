@@ -130,8 +130,8 @@ class TestNimbusExperimentChangeLogSerializer(TestCase):
                 projects=[project],
                 primary_outcomes=[primary_outcome],
                 secondary_outcomes=[secondary_outcome],
-                subscribers=[subscriber],
                 parent=parent_experiment,
+                subscribers=[subscriber],
             )
         data = dict(NimbusExperimentChangeLogSerializer(experiment).data)
         branches_data = [dict(b) for b in data.pop("branches")]
