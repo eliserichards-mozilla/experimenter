@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 from unittest import mock
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils.text import slugify
 from parameterized import parameterized
@@ -1738,25 +1739,25 @@ class TestNimbusExperimentSerializer(TestCase):
         self.assertEqual(experiment.qa_comment, qa_comment)
 
     def test_can_update_subscribers(self):
+        subscriber: User = UserFactory.create()
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.LIVE_APPROVE_APPROVE,
             application=NimbusExperiment.Application.DESKTOP,
             subscribers=[],
         )
-        new_subscriber = UserFactory.create()
 
         serializer = NimbusExperimentSerializer(
             experiment,
             {
-                "subscribed": True,
-                "changelog_message": "Test subscribe",
+                "subscribers": [subscriber.id],
+                "changelog_message": "Test unsubscribe",
             },
-            context={"user": new_subscriber},
+            context={"user": subscriber},
         )
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
         experiment = serializer.save()
-        self.assertEqual(list(experiment.subscribers.all()), [new_subscriber])
+        self.assertEqual(list(experiment.subscribers.all()), [subscriber])
 
     def test_can_remove_subscribers(self):
         subscriber = UserFactory.create()
@@ -1769,7 +1770,7 @@ class TestNimbusExperimentSerializer(TestCase):
         serializer = NimbusExperimentSerializer(
             experiment,
             {
-                "subscribed": False,
+                "subscribers": [],
                 "changelog_message": "Test unsubscribe",
             },
             context={"user": subscriber},

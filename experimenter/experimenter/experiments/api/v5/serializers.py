@@ -110,7 +110,6 @@ class TransitionConstants:
             "status_next",
             "status",
             "conclusion_recommendation",
-            "subscribed",
             "subscribers",
             "takeaways_summary",
             "takeaways_metric_gain",
@@ -951,9 +950,6 @@ class NimbusExperimentSerializer(
         allow_blank=True,
         allow_null=True,
     )
-    subscribed = serializers.BooleanField(
-        required=False,
-    )
     subscribers = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
         many=True,
@@ -1009,7 +1005,6 @@ class NimbusExperimentSerializer(
             "slug",
             "status_next",
             "status",
-            "subscribed",
             "subscribers",
             "takeaways_gain_amount",
             "takeaways_metric_gain",
@@ -1204,12 +1199,18 @@ class NimbusExperimentSerializer(
             # (including rejections) if we don't check validated_data
             validated_data["is_rollout_dirty"] = True
 
-        if self.instance and validated_data.get("subscribed") is not None:
-            subscribed = validated_data["subscribed"]
+        if self.instance and validated_data.get("subscribers") is not None:
+            subscribers = validated_data["subscribers"]
             current_user = self.context["user"]
-            if subscribed:
+            if (
+                current_user not in self.instance.subscribers.all()
+                and current_user in subscribers
+            ):
                 self.instance.subscribers.add(current_user)
-            else:
+            elif (
+                current_user in self.instance.subscribers.all()
+                and current_user not in subscribers
+            ):
                 self.instance.subscribers.remove(current_user)
 
         self.changelog_message = validated_data.pop("changelog_message")
