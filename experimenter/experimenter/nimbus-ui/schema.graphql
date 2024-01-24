@@ -513,6 +513,9 @@ type Mutation {
 
   """Clone an experiment."""
   cloneExperiment(input: ExperimentCloneInput!): CloneExperiment
+
+  """Subscribe to an experiment."""
+  subscribeToExperiment(input: ExperimentInput!): SubscribeToExperiment
 }
 
 type CreateExperiment {
@@ -563,7 +566,7 @@ input ExperimentInput {
   secondaryOutcomes: [String]
   status: NimbusExperimentStatusEnum
   statusNext: NimbusExperimentStatusEnum
-  subscribers: [String]
+  subscribed: Boolean
   takeawaysMetricGain: Boolean
   takeawaysGainAmount: String
   takeawaysQbrLearning: Boolean
@@ -629,4 +632,9 @@ input ExperimentCloneInput {
   parentSlug: String!
   name: String!
   rolloutBranchSlug: String
+}
+
+type SubscribeToExperiment {
+  nimbusExperiment: NimbusExperimentType
+  message: ObjectField
 }
