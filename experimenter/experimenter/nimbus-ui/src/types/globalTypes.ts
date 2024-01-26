@@ -301,7 +301,7 @@ export interface ExperimentInput {
   secondaryOutcomes?: (string | null)[] | null;
   status?: NimbusExperimentStatusEnum | null;
   statusNext?: NimbusExperimentStatusEnum | null;
-  subscribed?: boolean | null;
+  subscribers?: NimbusExperimentUserInput[] | null;
   takeawaysMetricGain?: boolean | null;
   takeawaysGainAmount?: string | null;
   takeawaysQbrLearning?: boolean | null;
@@ -320,6 +320,14 @@ export interface NimbusExperimentBranchThroughExcludedInput {
 export interface NimbusExperimentBranchThroughRequiredInput {
   requiredExperiment: number;
   branchSlug?: string | null;
+}
+
+export interface NimbusExperimentUserInput {
+  id?: number | null;
+  email: string;
+  username?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
 }
 
 //==============================================================

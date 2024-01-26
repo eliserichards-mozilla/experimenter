@@ -688,6 +688,26 @@ class NimbusExperimentDocumentationLinkMixin:
         return experiment
 
 
+class NimbusExperimentSubscribersMixin:
+    def update(self, experiment, data):
+        subscribers = data.pop("subscribers", None)
+        experiment = super().update(experiment, data)
+
+        if self.instance and subscribers is not None:
+            current_user = self.context["user"]
+            if (
+                current_user not in self.instance.subscribers.all()
+                and current_user in subscribers[0].values()
+            ):
+                self.instance.subscribers.add(current_user)
+            elif (
+                current_user in self.instance.subscribers.all()
+                and current_user not in subscribers[0].values()
+            ):
+                self.instance.subscribers.remove(current_user)
+        return experiment
+
+
 class NimbusStatusValidationMixin:
     """
     This will only validate certain statuses, and the validation does not
@@ -801,6 +821,12 @@ class NimbusExperimentBranchThroughSerializer(serializers.Serializer):
 
         return data
 
+class NimbusExperimentSubscriberEmailSerializer(serializers.Serializer):
+    email = serializers.SlugRelatedField(
+        queryset=User.objects.all(),
+        slug_field="email",
+        required=False,
+    )
 
 class NimbusExperimentBranchThroughRequiredSerializer(
     NimbusExperimentBranchThroughSerializer
@@ -826,6 +852,7 @@ class NimbusExperimentSerializer(
     NimbusExperimentBranchMixin,
     NimbusStatusValidationMixin,
     NimbusExperimentDocumentationLinkMixin,
+    NimbusExperimentSubscribersMixin,
     ExperimentNameValidatorMixin[NimbusExperiment],
     serializers.ModelSerializer,
 ):
@@ -950,11 +977,8 @@ class NimbusExperimentSerializer(
         allow_blank=True,
         allow_null=True,
     )
-    subscribers = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        many=True,
-        allow_null=False,
-        allow_empty=True,
+    subscribers = serializers.ListField(
+        child=NimbusExperimentSubscriberEmailSerializer(),
         required=False,
     )
 
@@ -1198,20 +1222,6 @@ class NimbusExperimentSerializer(
             # can be Live Update (Dirty), End Enrollment, or End Experiment
             # (including rejections) if we don't check validated_data
             validated_data["is_rollout_dirty"] = True
-
-        if self.instance and validated_data.get("subscribers") is not None:
-            subscribers = validated_data["subscribers"]
-            current_user = self.context["user"]
-            if (
-                current_user not in self.instance.subscribers.all()
-                and current_user in subscribers
-            ):
-                self.instance.subscribers.add(current_user)
-            elif (
-                current_user in self.instance.subscribers.all()
-                and current_user not in subscribers
-            ):
-                self.instance.subscribers.remove(current_user)
 
         self.changelog_message = validated_data.pop("changelog_message")
         return super().update(experiment, validated_data)

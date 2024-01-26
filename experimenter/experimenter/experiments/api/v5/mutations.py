@@ -93,6 +93,9 @@ class UpdateExperiment(graphene.Mutation):
         if "feature_config_ids" in input:
             input["feature_configs"] = input.pop("feature_config_ids", None)
 
+        if "subscribers" in input:
+            input["subscribers"] = input.pop("subscribers", None)
+
         serializer = NimbusExperimentSerializer(
             experiment, data=input, partial=True, context={"user": info.context.user}
         )

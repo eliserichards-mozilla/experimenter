@@ -146,6 +146,7 @@ class TestNimbusExperimentSerializer(TestCase):
     def test_allows_empty_values_for_all_fields_existing_experiment(self):
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.CREATED,
+            subscribers=[],
         )
         data = {
             "name": "",
@@ -1738,7 +1739,7 @@ class TestNimbusExperimentSerializer(TestCase):
         experiment = comment_serializer.save()
         self.assertEqual(experiment.qa_comment, qa_comment)
 
-    def test_can_update_subscribers(self):
+    def test_can_update_subscribers_with_no_existing_subscribers(self):
         subscriber: User = UserFactory.create()
         experiment = NimbusExperimentFactory.create_with_lifecycle(
             NimbusExperimentFactory.Lifecycles.LIVE_APPROVE_APPROVE,
@@ -1759,6 +1760,28 @@ class TestNimbusExperimentSerializer(TestCase):
         experiment = serializer.save()
         self.assertEqual(list(experiment.subscribers.all()), [subscriber])
 
+    def test_can_update_subscribers_with_existing_subscribers(self):
+        subscriber: User = UserFactory.create()
+        experiment = NimbusExperimentFactory.create_with_lifecycle(
+            NimbusExperimentFactory.Lifecycles.LIVE_APPROVE_APPROVE,
+            application=NimbusExperiment.Application.DESKTOP,
+            subscribers=[subscriber],
+        )
+        new_subscriber: User = UserFactory.create()
+
+        serializer = NimbusExperimentSerializer(
+            experiment,
+            {
+                "subscribers": [new_subscriber.id],
+                "changelog_message": "Test unsubscribe",
+            },
+            context={"user": new_subscriber},
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        experiment = serializer.save()
+        self.assertEqual(list(experiment.subscribers.all()), [subscriber, new_subscriber])
+
     def test_can_remove_subscribers(self):
         subscriber = UserFactory.create()
         experiment = NimbusExperimentFactory.create_with_lifecycle(
@@ -1774,6 +1797,27 @@ class TestNimbusExperimentSerializer(TestCase):
                 "changelog_message": "Test unsubscribe",
             },
             context={"user": subscriber},
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        experiment = serializer.save()
+        self.assertEqual(list(experiment.subscribers.all()), [])
+
+    def test_can_remove_subscribers_with_no_existing_subscribers(self):
+        experiment = NimbusExperimentFactory.create_with_lifecycle(
+            NimbusExperimentFactory.Lifecycles.LIVE_APPROVE_APPROVE,
+            application=NimbusExperiment.Application.DESKTOP,
+            subscribers=[],
+        )
+        new_subscriber = UserFactory.create()
+
+        serializer = NimbusExperimentSerializer(
+            experiment,
+            {
+                "subscribers": [],
+                "changelog_message": "Test unsubscribe",
+            },
+            context={"user": new_subscriber},
         )
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
