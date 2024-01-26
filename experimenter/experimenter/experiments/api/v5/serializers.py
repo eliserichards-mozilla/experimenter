@@ -687,26 +687,54 @@ class NimbusExperimentDocumentationLinkMixin:
 
         return experiment
 
+class SlugRelatedField(serializers.SlugRelatedField):
+    def to_internal_value(self, *args, **kwargs):
+        user = super().to_internal_value(*args, **kwargs)
+        print(f"USER: {user}")
+        return user
+
+    def to_representation(self, *args, **kwargs):
+        rep = super().to_representation(*args, **kwargs)
+        print(f"USER REP {rep}")
+        return rep
+
+class NimbusExperimentSubscriberSerializer(serializers.Serializer):
+    user = serializers.SlugRelatedField(
+        queryset=User.objects.all(),
+        slug_field="email",
+        required=True,
+        source="email"
+    )
+    subscribed = serializers.BooleanField(required=True)
+
 
 class NimbusExperimentSubscribersMixin:
+
+    def validate(self, data):
+        from pprint import pprint
+        print("5 dollar foot long")
+        pprint(data["subscribers"])
+        return data
+
+
     def update(self, experiment, data):
+        print("ARE WE HERE YET!?, the movie, with ice cube")
         subscribers = data.pop("subscribers", None)
         experiment = super().update(experiment, data)
-
+        from pprint import pprint
+        pprint(subscribers)
         if self.instance and subscribers is not None:
-            import ipdb
-            ipdb.set_trace()
-            current_user = self.context["user"]
-            if (
-                current_user not in self.instance.subscribers.all()
-                and current_user in subscribers[0].values()
-            ):
-                self.instance.subscribers.add(current_user)
-            elif (
-                current_user in self.instance.subscribers.all()
-                and current_user not in subscribers[0].values()
-            ):
-                self.instance.subscribers.remove(current_user)
+            for subscriber in subscribers:
+                if subscriber["subscribed"]:
+                    # LIKE AND DUBSCRIBE
+                    self.instance.subscribers.add(subscriber["user"])
+                    print(f"!!! SUSBCRIBED with {subscriber['user']}")
+                else:
+                    # unsunscribe and unlike
+                    self.instance.subscribers.remove(subscriber["user"])
+                    print(f"!!! UNSUSBCRIBED with {subscriber['user']}")
+
+    
         return experiment
 
 
@@ -823,16 +851,8 @@ class NimbusExperimentBranchThroughSerializer(serializers.Serializer):
 
         return data
 
-class NimbusExperimentSubscriberSerializer(serializers.Serializer):
-    email = serializers.SlugRelatedField(
-        queryset=User.objects.all(),
-        slug_field="email",
-        required=True,
-    )
-    subscribed = serializers.BooleanField(required=True)
 
-    def update(self, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
+
 
 
 class NimbusExperimentBranchThroughRequiredSerializer(
@@ -1153,11 +1173,6 @@ class NimbusExperimentSerializer(
 
         return value
 
-    def validate_subscribers(self, subscribers):
-        #     raise serializers.ValidationError(
-        #         f'{self.context["user"]} can not review this experiment.'
-        #     )
-        return subscribers
 
     def validate(self, data):
         data = super().validate(data)
@@ -1214,6 +1229,11 @@ class NimbusExperimentSerializer(
             )
         return data
 
+    def validate_subscribers(self, subscribers):
+        import ipdb; ipdb.set_trace()
+        return subscribers
+
+
     def update(self, experiment, validated_data):
         if (
             experiment.is_rollout
@@ -1231,6 +1251,25 @@ class NimbusExperimentSerializer(
             validated_data["is_rollout_dirty"] = True
 
         self.changelog_message = validated_data.pop("changelog_message")
+        print("!!!! NimbusExperimentSerializer.update")
+        print("!!!! NimbusExperimentSerializer.update")
+        print("!!!! NimbusExperimentSerializer.update")
+        print("!!!! NimbusExperimentSerializer.update")
+        print("!!!! NimbusExperimentSerializer.update")
+
+        subscribers = validated_data.pop("subscribers", None)
+        if self.instance and subscribers:
+            from pprint import pprint
+            pprint(subscribers)
+            import ipdb; ipdb.set_trace()
+            for subscriber in subscribers:
+                
+                if subscriber["subscribed"]:
+                    self.instance.subscribers.add(subscriber["user"])
+                else:
+                    self.instance.subscribers.remove(subscriber["user"])
+
+    
         return super().update(experiment, validated_data)
 
     def create(self, validated_data):
@@ -1280,6 +1319,7 @@ class NimbusExperimentSerializer(
                 )
 
     def save(self):
+        print("!?!??!?!?!?!?!?!?")
         feature_configs_provided = "feature_configs" in self.validated_data
         feature_configs = self.validated_data.pop("feature_configs", None)
 
@@ -1299,7 +1339,9 @@ class NimbusExperimentSerializer(
 
             self.save_required_excluded_experiment_branches()
 
+            print("SAVE THE WHALES")
             experiment = super().save()
+            print("phew theyre saved")
             if experiment.has_filter(experiment.Filters.SHOULD_ALLOCATE_BUCKETS):
                 experiment.allocate_bucket_range()
 

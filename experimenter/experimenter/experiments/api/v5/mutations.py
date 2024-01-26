@@ -23,6 +23,7 @@ from experimenter.experiments.models import NimbusExperiment
 
 
 def handle_with_serializer(cls, serializer):
+    
     if serializer.is_valid():
         obj = serializer.save()
         msg = "success"
@@ -53,27 +54,27 @@ class CreateExperiment(graphene.Mutation):
         return handle_with_serializer(cls, serializer)
 
 
-class SubscribeToExperiment(graphene.Mutation):
-    nimbus_experiment = graphene.Field(NimbusExperimentType)
-    message = ObjectField()
+# class SubscribeToExperiment(graphene.Mutation):
+#     nimbus_experiment = graphene.Field(NimbusExperimentType)
+#     message = ObjectField()
 
-    class Arguments:
-        input = ExperimentInput(required=True)
+#     class Arguments:
+#         input = ExperimentInput(required=True)
 
-    @classmethod
-    def mutate(cls, root, info, input: ExperimentInput):  # noqa: A002
-        experiment = NimbusExperiment.objects.get(id=input.id)
-        if "reference_branch" in input and input["reference_branch"] is None:
-            input.pop("reference_branch")
+#     @classmethod
+#     def mutate(cls, root, info, input: ExperimentInput):  # noqa: A002
+#         experiment = NimbusExperiment.objects.get(id=input.id)
+#         if "reference_branch" in input and input["reference_branch"] is None:
+#             input.pop("reference_branch")
 
-        if "subscribed" in input:
-            input["subscribed"] = input.pop("subscribed")
+#         if "subscribers" in input:
+#             input["subscribers"] = input.pop("subscribers")
 
-        serializer = NimbusExperimentSerializer(
-            experiment, data=input, partial=True, context={"user": info.context.user}
-        )
+#         serializer = NimbusExperimentSerializer(
+#             experiment, data=input, partial=True, context={"user": info.context.user}
+#         )
 
-        return handle_with_serializer(cls, serializer)
+#         return handle_with_serializer(cls, serializer)
 
 
 class UpdateExperiment(graphene.Mutation):
@@ -93,9 +94,10 @@ class UpdateExperiment(graphene.Mutation):
         if "feature_config_ids" in input:
             input["feature_configs"] = input.pop("feature_config_ids", None)
 
-        if "subscribers" in input:
-            input["subscribers"] = input.pop("subscribers", None)
-
+        # if "subscribers" in input:
+        #     input["subscribers"] = input.pop("subscribers", None)
+        import ipdb
+        ipdb.set_trace()
         serializer = NimbusExperimentSerializer(
             experiment, data=input, partial=True, context={"user": info.context.user}
         )
@@ -123,6 +125,6 @@ class Mutation(graphene.ObjectType):
     )
     update_experiment = UpdateExperiment.Field(description="Update a Nimbus Experiment.")
     clone_experiment = CloneExperiment.Field(description="Clone an experiment.")
-    subscribe_to_experiment = SubscribeToExperiment.Field(
-        description="Subscribe to an experiment."
-    )
+    # subscribe_to_experiment = SubscribeToExperiment.Field(
+    #     description="Subscribe to an experiment."
+    # )

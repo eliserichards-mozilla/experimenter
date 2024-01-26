@@ -12,7 +12,7 @@ import { displayConfigLabelOrNotSet } from "src/components/Summary";
 import { UPDATE_EXPERIMENT_MUTATION } from "src/gql/experiments";
 import { useCommonForm, useConfig, useOutcomes } from "src/hooks";
 import { ReactComponent as ExpandPlus } from "src/images/plus.svg";
-import { BASE_PATH, CHANGELOG_MESSAGES, SUBMIT_ERROR } from "src/lib/constants";
+import { CHANGELOG_MESSAGES, SUBMIT_ERROR } from "src/lib/constants";
 import { getExperiment_experimentBySlug } from "src/types/getExperiment";
 import {
   updateExperiment,
@@ -31,6 +31,7 @@ interface DocSlugs {
 // type OverviewFieldName = typeof overviewFieldNames[number];
 
 export type SubscriberParams = {
+  email: string;
   subscribed: boolean;
 };
 
@@ -41,6 +42,7 @@ const TableOverview = ({ experiment }: TableOverviewProps) => {
   const { primaryOutcomes, secondaryOutcomes } = useOutcomes(experiment);
 
   const defaultValues: SubscriberParams = {
+    email: "",
     subscribed: true,
   };
 
@@ -273,8 +275,13 @@ export const useUpdate = (experiment: getExperiment_experimentBySlug) => {
         variables: {
           input: {
             id: experiment.id,
-            subscribed: true,
-            changelogMessage: CHANGELOG_MESSAGES.UPDATED_SUBSCRIBERS,
+            subscribers: [
+              {
+                email: "dev@example.com",
+                subscribed: true,
+              },
+            ],
+            changelogMessage: CHANGELOG_MESSAGES.SUBSCRIBE_TO_EXPERIMENT,
           },
         },
       });
