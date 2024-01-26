@@ -1317,8 +1317,8 @@ class TestUpdateExperimentMutationSingleFeature(
         result = content["data"]["updateExperiment"]
 
         self.assertEqual(result["message"], "success")
-        # import ipdb
-        # ipdb.set_trace()
+        import ipdb
+        ipdb.set_trace()
         experiment = NimbusExperiment.objects.get()
         self.assertEqual(list(experiment.subscribers.all()), [current_user])
 

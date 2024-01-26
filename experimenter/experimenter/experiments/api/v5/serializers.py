@@ -694,6 +694,8 @@ class NimbusExperimentSubscribersMixin:
         experiment = super().update(experiment, data)
 
         if self.instance and subscribers is not None:
+            import ipdb
+            ipdb.set_trace()
             current_user = self.context["user"]
             if (
                 current_user not in self.instance.subscribers.all()
@@ -821,12 +823,17 @@ class NimbusExperimentBranchThroughSerializer(serializers.Serializer):
 
         return data
 
-class NimbusExperimentSubscriberEmailSerializer(serializers.Serializer):
+class NimbusExperimentSubscriberSerializer(serializers.Serializer):
     email = serializers.SlugRelatedField(
         queryset=User.objects.all(),
         slug_field="email",
-        required=False,
+        required=True,
     )
+    subscribed = serializers.BooleanField(required=True)
+
+    def update(self, *args, **kwargs):
+        import ipdb; ipdb.set_trace()
+
 
 class NimbusExperimentBranchThroughRequiredSerializer(
     NimbusExperimentBranchThroughSerializer
@@ -978,7 +985,7 @@ class NimbusExperimentSerializer(
         allow_null=True,
     )
     subscribers = serializers.ListField(
-        child=NimbusExperimentSubscriberEmailSerializer(),
+        child=NimbusExperimentSubscriberSerializer(),
         required=False,
     )
 
