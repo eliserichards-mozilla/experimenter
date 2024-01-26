@@ -472,6 +472,7 @@ type NimbusConfigurationType {
   statusUpdateExemptFields: [NimbusStatusUpdateExemptFieldsType]
   populationSizingData: String
   qaStatus: [NimbusLabelValueType]
+  user: String!
 }
 
 type NimbusExperimentApplicationConfigType {
@@ -617,7 +618,7 @@ input NimbusExperimentBranchThroughRequiredInput {
 }
 
 input NimbusExperimentSubscriberInput {
-  email: String!
+  user: String!
   subscribed: Boolean!
 }
 

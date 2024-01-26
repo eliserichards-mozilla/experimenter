@@ -687,6 +687,25 @@ class NimbusExperimentDocumentationLinkMixin:
 
         return experiment
 
+class SlugRelatedField(serializers.SlugRelatedField):
+    def to_internal_value(self, *args, **kwargs):
+        user = super().to_internal_value(*args, **kwargs)
+        print(f"USER: {user}")
+        return user
+
+    def to_representation(self, *args, **kwargs):
+        rep = super().to_representation(*args, **kwargs)
+        print(f"USER REP {rep}")
+        return rep
+
+class NimbusExperimentSubscriberSerializer(serializers.Serializer):
+    user = serializers.SlugRelatedField(
+        queryset=User.objects.all(),
+        slug_field="email",
+        required=True,
+    )
+    subscribed = serializers.BooleanField(required=True)
+
 
 class NimbusExperimentSubscriberSerializer(serializers.Serializer):
     email = serializers.SlugRelatedField(
@@ -698,10 +717,20 @@ class NimbusExperimentSubscriberSerializer(serializers.Serializer):
 
 
 class NimbusExperimentSubscribersMixin:
+
+    def validate(self, data):
+        from pprint import pprint
+        print("5 dollar foot long")
+        pprint(data["subscribers"])
+        return data
+
+
     def update(self, experiment, data):
+        print("ARE WE tHERE YET!?, the movie, with ice cube")
         subscribers = data.pop("subscribers", None)
         experiment = super().update(experiment, data)
-
+        from pprint import pprint
+        pprint(subscribers)
         if self.instance and subscribers is not None:
             for subscriber in subscribers:
                 if (
@@ -1292,7 +1321,6 @@ class NimbusExperimentSerializer(
             self.save_required_excluded_experiment_branches()
 
             experiment = super().save()
-
             if experiment.has_filter(experiment.Filters.SHOULD_ALLOCATE_BUCKETS):
                 experiment.allocate_bucket_range()
 
