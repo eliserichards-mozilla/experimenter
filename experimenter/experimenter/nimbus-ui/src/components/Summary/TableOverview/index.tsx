@@ -2,76 +2,69 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import React, { useMemo, useState } from "react";
+import { useMutation } from "@apollo/client";
+import { useNavigate } from "@reach/router";
+import React, { useState } from "react";
 import { Button, Card, Table } from "react-bootstrap";
-import { ReactComponent as ExpandPlus } from "src/images/plus.svg";
 import NotSet from "src/components/NotSet";
 import RichText from "src/components/RichText";
 import { displayConfigLabelOrNotSet } from "src/components/Summary";
+import { UPDATE_EXPERIMENT_MUTATION } from "src/gql/experiments";
 import { useCommonForm, useConfig, useOutcomes } from "src/hooks";
-import { getExperiment_experimentBySlug, getExperiment_experimentBySlug_subscribers } from "src/types/getExperiment";
+import { ReactComponent as ExpandPlus } from "src/images/plus.svg";
+import { BASE_PATH, CHANGELOG_MESSAGES, SUBMIT_ERROR } from "src/lib/constants";
+import { getExperiment_experimentBySlug } from "src/types/getExperiment";
+import {
+  updateExperiment,
+  updateExperimentVariables,
+} from "src/types/updateExperiment";
 
 type TableOverviewProps = {
   experiment: getExperiment_experimentBySlug;
-  submitErrors: SerializerMessages;
-  setSubmitErrors: React.Dispatch<React.SetStateAction<Record<string, any>>>;
-  isServerValid: boolean;
-  isLoading: boolean;
-  onSave: (params: SubscriberParams) => void;
-};
-
-type SubscriberParams = {
-  subscribers: (getExperiment_experimentBySlug_subscribers | null)[];
 };
 
 interface DocSlugs {
   [key: string]: string;
 }
 
-export const overviewFieldNames = ["subscribers"] as const;
-type OverviewFieldName = typeof overviewFieldNames[number];
+// export const overviewFieldNames = ["subscribers"] as const;
+// type OverviewFieldName = typeof overviewFieldNames[number];
+
+export type SubscriberParams = {
+  subscribed: boolean;
+};
 
 // `<tr>`s showing optional fields that are not set are not displayed.
 
-const TableOverview = ({
-  experiment,
-  isLoading,
-  isServerValid,
-  submitErrors,
-  setSubmitErrors,
-  onSave,
-}: TableOverviewProps) => {
+const TableOverview = ({ experiment }: TableOverviewProps) => {
   const { applications } = useConfig();
   const { primaryOutcomes, secondaryOutcomes } = useOutcomes(experiment);
-  const defaultValues: SubscriberParams = {
-    subscribers: experiment?.subscribers || [],
-  };
-  type DefaultValues = typeof defaultValues;
 
-  const [subscribers, setSubscribers] = useState(experiment!.subscribers ?? []);
+  const defaultValues: SubscriberParams = {
+    subscribed: true,
+  };
+
+  const {
+    disabled,
+    onSave,
+    onDisableButton,
+    disableButton,
+    isLoading,
+    isServerValid,
+    submitErrors,
+    setSubmitErrors,
+  } = useUpdate(experiment);
 
   const { FormErrors, formControlAttrs, handleSubmit, formMethods, getValues } =
-    useCommonForm<OverviewFieldName>(
+    useCommonForm<keyof SubscriberParams>(
       defaultValues,
       isServerValid,
       submitErrors,
       setSubmitErrors,
     );
 
-  const { trigger } = formMethods;
+  // const { trigger } = formMethods;
   const handleSave = handleSubmit(onSave);
-
-  // const [handleSave, handleSaveNext] = useMemo(
-  //   () =>
-  //     [false, true].map((next) =>
-  //       handleSubmit(
-  //         (dataIn: DefaultValues) =>
-  //           !isLoading && onSubmit({ ...dataIn, subscribers }, next),
-  //       ),
-  //     ),
-  //   [handleSubmit, isLoading, onSubmit, subscribers],
-  // );
-
   const docSlugs: DocSlugs = {
     DESKTOP: "firefox_desktop",
     FENIX: "fenix",
@@ -241,6 +234,7 @@ const TableOverview = ({
                     variant="outline-primary"
                     data-testid="add-subscriber-button"
                     onClick={handleSave}
+                    disabled={disableButton}
                   >
                     <ExpandPlus />
                     Subscribe
@@ -253,6 +247,68 @@ const TableOverview = ({
       </Card.Body>
     </Card>
   );
+};
+
+export const useUpdate = (experiment: getExperiment_experimentBySlug) => {
+  const navigate = useNavigate();
+
+  const [updateExperiment] = useMutation<
+    updateExperiment,
+    updateExperimentVariables
+  >(UPDATE_EXPERIMENT_MUTATION);
+
+  const [disableButton, setDisableButton] = useState(false);
+  const onDisableButton = () => setDisableButton(true);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isServerValid, setIsServerValid] = useState(true);
+  const [submitErrors, setSubmitErrors] = useState<Record<string, any>>({});
+
+  const onSave = async (data: SubscriberParams) => {
+    setIsLoading(true);
+    setIsServerValid(true);
+    setSubmitErrors({});
+    try {
+      const result = await updateExperiment({
+        variables: {
+          input: {
+            id: experiment.id,
+            subscribed: true,
+            changelogMessage: CHANGELOG_MESSAGES.UPDATED_SUBSCRIBERS,
+          },
+        },
+      });
+
+      if (!result.data?.updateExperiment) {
+        throw new Error(SUBMIT_ERROR);
+      }
+
+      const { message } = result.data.updateExperiment;
+      if (message && message !== "success" && typeof message === "object") {
+        setIsServerValid(false);
+        setSubmitErrors(message);
+      } else {
+        // const { slug } = result.data.updateExperiment.nimbusExperiment!;
+        navigate("."); // refresh the page
+        setDisableButton(true);
+      }
+    } catch (error) {
+      setSubmitErrors({ "*": SUBMIT_ERROR });
+    }
+    setIsLoading(false);
+  };
+
+  return {
+    experiment,
+    disabled: isLoading,
+    onSave,
+    onDisableButton,
+    disableButton,
+    isLoading,
+    isServerValid,
+    submitErrors,
+    setSubmitErrors,
+  };
 };
 
 export default TableOverview;
