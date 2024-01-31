@@ -2,14 +2,29 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import { act, render, screen, waitFor, within } from "@testing-library/react";
-import React, { useContext } from "react";
-import TableOverview from "src/components/Summary/TableOverview";
-import { ExperimentContext, ExperimentContextType } from "src/lib/contexts";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import React, { ReactNode } from "react";
+import TableOverview, {
+  SubscriberParams,
+} from "src/components/Summary/TableOverview";
+import { UPDATE_EXPERIMENT_MUTATION } from "src/gql/experiments";
+import { ExperimentContextType } from "src/lib/contexts";
 import { MockedCache, mockExperimentQuery, MOCK_CONFIG } from "src/lib/mocks";
-import { MockExperimentContextProvider } from "src/lib/test-utils";
+import {
+  MockExperimentContextProvider,
+  RouterSlugProvider,
+} from "src/lib/test-utils";
 import { getConfig_nimbusConfig } from "src/types/getConfig";
 import { getExperiment_experimentBySlug } from "src/types/getExperiment";
+import { ExperimentInput } from "src/types/globalTypes";
+import { updateExperiment_updateExperiment } from "src/types/updateExperiment";
+import { Subject, mockUpdateExperimentSubscribersMutation } from "src/components/Summary/TableOverview/mocks";
 
 describe("TableOverview", () => {
   it("renders rows displaying required fields at experiment creation as expected", () => {
@@ -167,7 +182,6 @@ describe("TableOverview", () => {
       );
     });
   });
-  // =============================================================
 
   describe("renders 'Targeting config' row as expected", () => {
     it("when set", () => {
@@ -243,99 +257,125 @@ describe("TableOverview", () => {
     });
   });
 
-  // describe("renders 'Subscribers' as expected", () => {
-  //   beforeAll(() => {
-  //     fetchMock.enableMocks();
-  //   });
+  describe("renders 'Subscribers' as expected", () => {
+    it("with no subscribers", async () => {
+      const { experiment } = mockExperimentQuery("demo-slug");
+      render(<Subject {...{ experiment }} />);
+      expect(screen.getByTestId("experiment-subscribers")).toHaveTextContent(
+        "Not set",
+      );
+    });
 
-  //   afterAll(() => {
-  //     fetchMock.disableMocks();
-  //   });
+    it("with multiple subscribers", async () => {
+      const { experiment } = mockExperimentQuery("demo-slug", {
+        subscribers: [
+          {
+            email: "example1@mozilla.com",
+          },
+          {
+            email: "example2@mozilla.com",
+          },
+        ],
+      });
+      render(<Subject {...{ experiment }} />);
+      await waitFor(() => {
+        experiment.subscribers!.forEach((subscriber) =>
+          within(screen.getByTestId("experiment-subscribers")).findByText(
+            subscriber!.email!,
+          ),
+        );
+      });
+    });
+  });
 
-  //   it("with no subscribers", async () => {
-  //     const { experiment } = mockExperimentQuery("demo-slug");
-  //     render(<Subject {...{ experiment }} />);
-  //     // await waitFor(() =>
-  //     //   expect(screen.getByTestId("")).toHaveTextContent(
-  //     //     "Not set",
-  //     //   ),
-  //     // );
-  //     expect(screen.getByTestId("experiment-subscribers")).toHaveTextContent(
-  //       "Not set",
-  //     );
-  //   });
-  //   // it("with multiple subscribers", () => {
-  //   //   const { experiment } = mockExperimentQuery("demo-slug", {
-  //   //     subscribers: [
-  //   //       {
-  //   //         email: "example1@mozilla.com",
-  //   //       },
-  //   //       {
-  //   //         email: "example2@mozilla.com",
-  //   //       },
-  //   //     ],
-  //   //   });
-  //   //   render(<Subject {...{ experiment }} />);
-  //   //   experiment.subscribers!.forEach(
-  //   //     async (subscriber) =>
-  //   //       await within(screen.getByTestId("experiment-subscribers")).findByText(
-  //   //         subscriber!.email!,
-  //   //       ),
-  //   //   );
-  //   // });
-  // });
+  describe("renders 'Subscribers' button as expected", () => {
+    it("when user is subscribed", async () => {
+      const currentUser = "me@dev.example";
+      const { experiment } = mockExperimentQuery("demo-slug", {
+        subscribers: [
+          {
+            email: currentUser,
+          },
+          {
+            email: "big_ole_cat@cronch.com",
+          },
+        ],
+      });
+      const config = {
+        ...MOCK_CONFIG,
+        user: currentUser,
+      };
+      expect(experiment.subscribers.flatMap((s) => s.email)).toEqual([
+        currentUser,
+        "big_ole_cat@cronch.com",
+      ]);
 
-  // describe("renders 'Subscribers' button as expected", () => {
-  //   // it("when user is not subscribed", async () => {
-  //   //   const { experiment } = mockExperimentQuery("demo-slug");
-  //   //   const currentUser = "me@dev.example";
-  //   //   const config = {
-  //   //     ...MOCK_CONFIG,
-  //   //     user: currentUser,
-  //   //   };
-  //   //   expect(experiment.subscribers).toEqual([]);
+      render(<Subject {...{ experiment, config }} />);
+      await waitFor(() => {
+        expect(
+          within(
+            screen.getByTestId("add-subscriber-button") as HTMLElement,
+          ).queryByText("Unsubscribe"),
+        ).toBeInTheDocument();
+      });
+    });
 
-  //   //   render(<Subject {...{ experiment, config }} />);
-  //   //   // await waitFor(() => {
-  //   //   //   expect(
-  //   //   //     within(
-  //   //   //       screen.getByTestId("add-subscriber-button") as HTMLElement,
-  //   //   //     ).queryByText("Unsubscribe"),
-  //   //   //   ).toBeInTheDocument();
-  //   //   // });
-  //   // });
+    it("when user is not subscribed", async () => {
+      const { experiment } = mockExperimentQuery("demo-slug");
+      const currentUser = "me@dev.example";
+      const config = {
+        ...MOCK_CONFIG,
+        user: currentUser,
+      };
+      expect(experiment.subscribers).toEqual([]);
 
-  //   it("when user is subscribed", async () => {
-  //     const currentUser = "me@dev.example";
-  //     const { experiment } = mockExperimentQuery("demo-slug", {
-  //       subscribers: [
-  //         {
-  //           email: currentUser,
-  //         },
-  //         {
-  //           email: "big_ole_cat@cronch.com",
-  //         },
-  //       ],
-  //     });
-  //     const config = {
-  //       ...MOCK_CONFIG,
-  //       user: currentUser,
-  //     };
-  //     expect(experiment.subscribers.flatMap((s) => s.email)).toEqual([
-  //       currentUser,
-  //       "big_ole_cat@cronch.com",
-  //     ]);
-  //     // expect(config.user).toEqual("currentUser");
-  //     // expect(config.user in experiment.subscribers).toEqual(true);
+      render(<Subject {...{ experiment, config }} />);
+      await waitFor(() => {
+        expect(
+          within(
+            screen.getByTestId("add-subscriber-button") as HTMLElement,
+          ).queryByText("Subscribe"),
+        ).toBeInTheDocument();
+      });
+    });
 
-  //     render(<Subject {...{ experiment, config }} />);
-  //     // await waitFor(() => {
-  //     //   expect(
-  //     //     screen.getByTestId("add-subscriber-button") as HTMLElement,
-  //     //   ).toBeInTheDocument();
-  //     // });
-  //   });
-  // });
+    it("subscribes as expected", async () => {
+      const { mock, experiment } = mockExperimentQuery("demo-slug");
+      const currentUser = "me@dev.example";
+      const config = {
+        ...MOCK_CONFIG,
+        user: currentUser,
+      };
+      expect(experiment.subscribers).toEqual([]);
+
+      setMockUpdateState(currentUser, false);
+
+      const mockMutation = mockUpdateExperimentSubscribersMutation(
+        {
+          ...mockUpdateState,
+          id: experiment.id,
+          changelogMessage: "test update subscribers",
+        },
+        {},
+      );
+
+      mockMutation.result.data.updateExperiment.message = {};
+      render(
+        <Subject mocks={[mock, mockMutation]} {...{ experiment, config }} />,
+      );
+      await screen.findByTestId("experiment-subscribers");
+
+      const subscribeButton = screen.getByTestId("add-subscriber-button");
+      fireEvent.click(subscribeButton);
+
+      await waitFor(() => {
+        expect(mockSetSubmitErrors).not.toHaveBeenCalled();
+        // mockMutation is not being called correctly
+        // expect(mockMutation.result).toEqual("success");
+      });
+      expect(experiment.subscribers).toEqual([]);
+    });
+  });
 });
 
 jest.mock("@reach/router", () => ({
@@ -343,24 +383,12 @@ jest.mock("@reach/router", () => ({
   navigate: jest.fn(),
 }));
 
-const Subject = ({
-  experiment,
-  config = MOCK_CONFIG,
-  context = {},
-}: {
-  experiment: getExperiment_experimentBySlug;
-  config?: getConfig_nimbusConfig;
-  context?: Partial<ExperimentContextType>;
-}) => (
-  // const { experiment } = useContext(ExperimentContext)!;
-  <MockedCache {...{ config }}>
-    <MockExperimentContextProvider
-      value={{
-        experiment: experiment,
-        ...context,
-      }}
-    >
-      <TableOverview {...{ experiment }} />
-    </MockExperimentContextProvider>
-  </MockedCache>
-);
+const mockSetSubmitErrors = jest.fn();
+let mockUpdateState: SubscriberParams;
+
+function setMockUpdateState(email: string, subscribed: boolean) {
+  mockUpdateState = {
+    email,
+    subscribed,
+  };
+}

@@ -618,7 +618,7 @@ input NimbusExperimentBranchThroughRequiredInput {
 }
 
 input NimbusExperimentSubscriberInput {
-  user: String!
+  email: String!
   subscribed: Boolean!
 }
 

@@ -100,14 +100,6 @@ class SummaryPage(ExperimenterBase):
         By.CSS_SELECTOR,
         '[data-testid="label-release-date"]',
     )
-    _subscribers_list_locator = (
-        By.CSS_SELECTOR,
-        '[data-testid="experiment-subscribers"]',
-    )
-    _subscribe_button_locator = (
-        By.CSS_SELECTOR,
-        '[data-testid="add-subscriber-button"]',
-    )
 
     def wait_for_archive_label_visible(self):
         self.wait.until(
@@ -398,39 +390,4 @@ class SummaryPage(ExperimenterBase):
         self.wait.until_not(
             EC.presence_of_element_located(self._audience_is_first_run_locator),
             message="Summary Page: found audience first run",
-        )
-
-    @property
-    def subscribers(self):
-        return self.wait_for_and_find_elements(
-            *self._subscribers_list_locator, "overview table subscribers"
-        )[0].text
-    
-    @property
-    def subscribe_button(self):
-        return self.wait_for_and_find_elements(
-            *self._subscribe_button_locator, "overview table subscribe button"
-        )[0].text
-
-    def launch_to_preview(self):
-        self.wait_for_and_find_element(*self._launch_to_preview_locator).click()
-        return self
-
-    def wait_for_subscribers_visible(self):
-        self.wait.until(
-            EC.presence_of_all_elements_located(self._subscribers_list_locator),
-            message="Summary Page: could not find subscribers list",
-        )
-
-    def wait_for_subscribe_button_visible(self):
-        self.wait.until(
-            EC.presence_of_all_elements_located(self._subscribe_button_locator),
-            message="Summary Page: could not find subscribe button",
-        )
-
-    def click_subscribe_button(self):
-        self.wait_for_and_find_element(*self._subscribe_button_locator).click()
-        self.wait_with_refresh(
-            EC.presence_of_all_elements_located(self._subscribe_button_locator),
-            message="Summary Page: Subscribe button not present",
         )

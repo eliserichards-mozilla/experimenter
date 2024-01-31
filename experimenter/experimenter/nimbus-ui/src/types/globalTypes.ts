@@ -324,7 +324,7 @@ export interface NimbusExperimentBranchThroughRequiredInput {
 }
 
 export interface NimbusExperimentSubscriberInput {
-  user: string;
+  email: string;
   subscribed: boolean;
 }
 

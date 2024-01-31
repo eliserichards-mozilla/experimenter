@@ -34,7 +34,7 @@ class BranchInput(graphene.InputObjectType):
 
 
 class NimbusExperimentSubscriberInput(graphene.InputObjectType):
-    user = graphene.String(required=True)
+    email = graphene.String(required=True)
     subscribed = graphene.Boolean(required=True)
 
 

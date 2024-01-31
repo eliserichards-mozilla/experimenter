@@ -5,12 +5,13 @@
 import { useMutation } from "@apollo/client";
 import { useNavigate } from "@reach/router";
 import React, { useState } from "react";
-import { Button, Card, Table } from "react-bootstrap";
+import { Alert, Button, Card, Table } from "react-bootstrap";
 import NotSet from "src/components/NotSet";
 import RichText from "src/components/RichText";
 import { displayConfigLabelOrNotSet } from "src/components/Summary";
 import { UPDATE_EXPERIMENT_MUTATION } from "src/gql/experiments";
 import { useCommonForm, useConfig, useOutcomes } from "src/hooks";
+import { ReactComponent as CollapseMinus } from "src/images/minus.svg";
 import { ReactComponent as ExpandPlus } from "src/images/plus.svg";
 import { CHANGELOG_MESSAGES, SUBMIT_ERROR } from "src/lib/constants";
 import { getExperiment_experimentBySlug } from "src/types/getExperiment";
@@ -33,12 +34,13 @@ export type SubscriberParams = {
 };
 
 // `<tr>`s showing optional fields that are not set are not displayed.
-
 const TableOverview = ({ experiment }: TableOverviewProps) => {
   const { applications, user } = useConfig();
   const { primaryOutcomes, secondaryOutcomes } = useOutcomes(experiment);
 
-  const [subscribed, setSubscribed] = useState(user in experiment.subscribers);
+  const [subscribed, setSubscribed] = useState<boolean>(
+    experiment.subscribers.find((s) => s.email === user) ? true : false,
+  );
   const [isServerValid, setIsServerValid] = useState(true);
   const [submitErrors, setSubmitErrors] = useState<Record<string, any>>({});
 
@@ -46,6 +48,14 @@ const TableOverview = ({ experiment }: TableOverviewProps) => {
     email: user,
     subscribed: subscribed,
   };
+  const navigate = useNavigate();
+
+  const { handleSubmit } = useCommonForm<keyof SubscriberParams>(
+    defaultValues,
+    isServerValid,
+    submitErrors,
+    setSubmitErrors,
+  );
 
   const [updateExperiment] = useMutation<
     updateExperiment,
@@ -71,6 +81,7 @@ const TableOverview = ({ experiment }: TableOverviewProps) => {
         },
       });
 
+      // istanbul ignore next - can't figure out how to trigger this in a test
       if (!result.data?.updateExperiment) {
         throw new Error(SUBMIT_ERROR);
       }
@@ -80,8 +91,7 @@ const TableOverview = ({ experiment }: TableOverviewProps) => {
         setIsServerValid(false);
         setSubmitErrors(message);
       } else {
-        // const { slug } = result.data.updateExperiment.nimbusExperiment!;
-        // navigate("."); // refresh the page
+        navigate(0); // refresh the page
         setSubscribed(!subscribed);
       }
     } catch (error) {
@@ -89,15 +99,8 @@ const TableOverview = ({ experiment }: TableOverviewProps) => {
     }
   };
 
-  const { handleSubmit } = useCommonForm<keyof SubscriberParams>(
-    defaultValues,
-    isServerValid,
-    submitErrors,
-    setSubmitErrors,
-  );
-
-  // const { trigger } = formMethods;
   const handleSave = handleSubmit(onSave);
+
   const docSlugs: DocSlugs = {
     DESKTOP: "firefox_desktop",
     FENIX: "fenix",
@@ -268,10 +271,24 @@ const TableOverview = ({ experiment }: TableOverviewProps) => {
                     data-testid="add-subscriber-button"
                     onClick={handleSave}
                   >
-                    <ExpandPlus />
-                    {subscribed ? "Subscribe" : "Unsubscribe"}
+                    {subscribed ? (
+                      <div>
+                        <CollapseMinus />
+                        Unsubscribe
+                      </div>
+                    ) : (
+                      <div>
+                        <ExpandPlus />
+                        Subscribe
+                      </div>
+                    )}
                   </Button>
                 </td>
+                {submitErrors["*"] && (
+                  <Alert data-testid="submit-error" variant="warning">
+                    {submitErrors["*"]}
+                  </Alert>
+                )}
               </td>
             </tr>
           </tbody>
